@@ -476,6 +476,7 @@ function SuperAdmin() {
   const [users, setUsers] = useState([]);
   const [authenticated, setAuthenticated] = useState(false);
   const [pass, setPass] = useState('');
+  const [editingUser, setEditingUser] = useState(null); 
   const MASTER_KEY = "TOPCODES_2026"; 
 
   const handleAuth = (e) => {
@@ -489,6 +490,34 @@ function SuperAdmin() {
   const fetchUsers = async () => {
     const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'profiles'));
     setUsers(snap.docs.map(d => d.data()));
+  };
+
+  // Función para guardar los cambios del usuario editado
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', editingUser.username), editingUser);
+      await updateDoc(doc(db, 'artifacts', appId, 'users', editingUser.uid, 'settings', 'profile'), editingUser);
+      alert("Usuario actualizado correctamente.");
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err) {
+      alert("Error al actualizar: " + err.message);
+    }
+  };
+
+  // Función para eliminar un usuario definitivamente
+  const handleDeleteUser = async (username, uid) => {
+    if(!window.confirm(`¿Seguro que deseas eliminar a @${username}? Esta acción no se puede deshacer.`)) return;
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', username));
+      await deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'));
+      alert("Usuario eliminado del sistema.");
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err) {
+      alert("Error al eliminar: " + err.message);
+    }
   };
 
   if (!authenticated) return (
@@ -505,9 +534,13 @@ function SuperAdmin() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 font-sans">
+    <div className="min-h-screen bg-slate-50 p-8 font-sans relative">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-black tracking-tighter uppercase italic mb-10 flex items-center gap-4"><Users size={32} className="text-blue-600"/> Master Directory</h1>
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-4"><Users size={32} className="text-blue-600"/> Master Directory</h1>
+          <Link to="/" className="text-xs font-bold text-slate-400 hover:text-black uppercase tracking-widest transition-colors">Volver a TopCodes</Link>
+        </div>
+        
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-slate-50 text-[10px] uppercase tracking-[0.2em] text-slate-400">
@@ -520,13 +553,58 @@ function SuperAdmin() {
                   <td className="p-6 text-slate-500">{u.email}</td>
                   <td className="p-6"><span className="bg-slate-100 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest">{u.category}</span></td>
                   <td className="p-6 text-center font-black text-xl italic">{u.views || 0}</td>
-                  <td className="p-6 text-right"><button onClick={()=>alert("Funcionalidad Pro: Editar usuario")} className="p-2 text-slate-300 hover:text-black"><Settings size={18}/></button></td>
+                  <td className="p-6 text-right">
+                    <button onClick={() => setEditingUser(u)} className="p-2 text-slate-400 hover:text-black transition-colors"><Settings size={18}/></button>
+                  </td>
                 </tr>
               ))}
+              {users.length === 0 && (
+                 <tr><td colSpan="5" className="p-10 text-center text-slate-400 italic font-medium">No hay usuarios registrados en la infraestructura.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* MODAL DE EDICIÓN (Aparece cuando seleccionas a un usuario) */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-2xl font-black mb-6 italic uppercase tracking-tighter">Editar @{editingUser.username}</h2>
+            <form onSubmit={handleUpdateUser} className="space-y-5">
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Nicho</label>
+                <select className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={editingUser.category} onChange={e => setEditingUser({...editingUser, category: e.target.value})}>
+                  <option value="">Seleccionar Nicho</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Ciudades</label>
+                <input type="text" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={editingUser.cities} onChange={e => setEditingUser({...editingUser, cities: e.target.value})}/>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Email (Solo Lectura)</label>
+                <input type="email" disabled className="w-full bg-slate-100 border-none rounded-2xl p-4 text-sm font-bold text-slate-400 outline-none cursor-not-allowed" value={editingUser.email} />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors">Cancelar</button>
+                <button type="submit" className="flex-1 bg-[#d1ff64] text-black py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Guardar</button>
+              </div>
+
+              <div className="pt-6 border-t border-slate-100 text-center">
+                <button type="button" onClick={() => handleDeleteUser(editingUser.username, editingUser.uid)} className="text-red-500 text-[10px] font-black uppercase tracking-widest hover:text-red-600 transition-colors flex items-center justify-center gap-2 w-full">
+                  <Trash2 size={12}/> Eliminar Influencer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
