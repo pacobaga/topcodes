@@ -22,12 +22,13 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // ==========================================
 // REEMPLAZA ESTOS VALORES CON LOS DE TU CONSOLA DE FIREBASE
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO_ID",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyBwZyz9UqDCGY7wbO2B2cGPSAkqebx4iV4",
+  authDomain: "top-codes-7208c.firebaseapp.com",
+  projectId: "top-codes-7208c",
+  storageBucket: "top-codes-7208c.firebasestorage.app",
+  messagingSenderId: "960236695146",
+  appId: "1:960236695146:web:4963cc8d4faffa47d26413",
+  measurementId: "G-RCTZTKDHHK"
 };
 
 const app = initializeApp(firebaseConfig);
