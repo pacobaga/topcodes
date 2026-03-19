@@ -13,7 +13,8 @@ import {
   Copy, Plus, Trash2, LogOut, User, Zap, Tag, MapPin, 
   ExternalLink, Link2, Search, Instagram, Eye, LayoutDashboard, 
   Settings, Users, Activity, BarChart3, Image as ImageIcon, Lock, 
-  ChevronRight, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle
+  ChevronRight, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
+  Youtube, Twitter, Music
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
@@ -409,7 +410,13 @@ function TabPromotions({ user, profile, promotions }) {
 
 // --- PESTAÑA: PERFIL ---
 function TabProfile({ user, profile }) {
-  const [formData, setFormData] = useState({ bio: profile.bio || '', photoUrl: profile.photoUrl || '' });
+  const [formData, setFormData] = useState({ 
+    bio: profile.bio || '', 
+    photoUrl: profile.photoUrl || '',
+    tiktokUrl: profile.tiktokUrl || '',
+    youtubeUrl: profile.youtubeUrl || '',
+    xUrl: profile.xUrl || ''
+  });
   const [msg, setMsg] = useState('');
 
   const handleSave = async (e) => {
@@ -425,15 +432,38 @@ function TabProfile({ user, profile }) {
       <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 flex items-center gap-3"><Settings size={24}/> Ajustes de Perfil</h2>
       {msg && <div className="bg-green-50 text-green-600 p-4 rounded-2xl text-xs font-bold mb-8">{msg}</div>}
       <form onSubmit={handleSave} className="space-y-8">
+        
+        <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+          <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Identidad Base (TopCodes & IG)</p>
+          <p className="text-lg font-black text-black italic">@{profile.username}</p>
+        </div>
+
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><ImageIcon size={14}/> Foto de Perfil (URL)</label>
-          <input type="url" placeholder="https://..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none" value={formData.photoUrl} onChange={e=>setFormData({...formData, photoUrl: e.target.value})}/>
+          <input type="url" placeholder="https://..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.photoUrl} onChange={e=>setFormData({...formData, photoUrl: e.target.value})}/>
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase text-slate-400 ml-4">Biografía / Presentación</label>
-          <textarea rows="4" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none resize-none" value={formData.bio} onChange={e=>setFormData({...formData, bio: e.target.value})}></textarea>
+          <textarea rows="4" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none resize-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.bio} onChange={e=>setFormData({...formData, bio: e.target.value})}></textarea>
         </div>
-        <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:brightness-110 transition-all">Guardar Cambios</button>
+
+        <div className="pt-6 border-t border-slate-100 space-y-6">
+          <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Globe size={16}/> Otras Redes Sociales</h3>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Music size={14}/> TikTok (URL)</label>
+            <input type="url" placeholder="https://tiktok.com/@..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.tiktokUrl} onChange={e=>setFormData({...formData, tiktokUrl: e.target.value})}/>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Youtube size={14}/> YouTube (URL)</label>
+            <input type="url" placeholder="https://youtube.com/..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.youtubeUrl} onChange={e=>setFormData({...formData, youtubeUrl: e.target.value})}/>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Twitter size={14}/> X / Twitter (URL)</label>
+            <input type="url" placeholder="https://x.com/..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.xUrl} onChange={e=>setFormData({...formData, xUrl: e.target.value})}/>
+          </div>
+        </div>
+
+        <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all">Guardar Cambios</button>
       </form>
     </div>
   );
@@ -541,37 +571,59 @@ function PublicSpot() {
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] font-sans pb-20 p-6">
-      <div className="max-w-xl mx-auto animate-in slide-in-from-bottom-8 duration-1000">
-        <header className="text-center mb-10 mt-10">
-          <div className="w-28 h-28 bg-white p-2 rounded-[3.5rem] shadow-2xl mx-auto mb-6 border border-slate-100 overflow-hidden flex items-center justify-center bg-slate-50">
-            {publicProfile.photoUrl ? <img src={publicProfile.photoUrl} className="w-full h-full object-cover" /> : <User size={40} className="text-slate-200" />}
+      <div className="max-w-5xl mx-auto animate-in slide-in-from-bottom-8 duration-1000">
+        <header className="text-center mb-12 mt-10">
+          <div className="w-32 h-32 md:w-40 md:h-40 bg-white p-2 rounded-[3.5rem] shadow-2xl mx-auto mb-6 border border-slate-100 overflow-hidden flex items-center justify-center bg-slate-50 transition-transform hover:scale-105">
+            {publicProfile.photoUrl ? <img src={publicProfile.photoUrl} className="w-full h-full object-cover" /> : <User size={50} className="text-slate-200" />}
           </div>
-          <h2 className="text-3xl font-black tracking-tighter uppercase italic">@{publicProfile.username}</h2>
-          <p className="text-sm font-bold text-slate-400 mt-2 max-w-sm mx-auto italic">{publicProfile.bio}</p>
+          <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">@{publicProfile.username}</h2>
+          <p className="text-sm md:text-base font-bold text-slate-400 mt-4 max-w-lg mx-auto italic">{publicProfile.bio}</p>
+          
+          {/* SOCIAL LINKS */}
+          <div className="flex justify-center gap-3 mt-6">
+            <a href={`https://instagram.com/${publicProfile.username}`} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-pink-600">
+              <Instagram size={20} />
+            </a>
+            {publicProfile.tiktokUrl && (
+              <a href={publicProfile.tiktokUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-black">
+                <Music size={20} />
+              </a>
+            )}
+            {publicProfile.youtubeUrl && (
+              <a href={publicProfile.youtubeUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-red-600">
+                <Youtube size={20} />
+              </a>
+            )}
+            {publicProfile.xUrl && (
+              <a href={publicProfile.xUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-slate-800">
+                <Twitter size={20} />
+              </a>
+            )}
+          </div>
         </header>
 
-        <div className="relative mb-10">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-          <input type="text" placeholder="Buscar marcas..." className="w-full bg-white border-none rounded-[2rem] py-5 pl-16 pr-6 shadow-sm font-bold text-sm outline-none" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
+        <div className="relative mb-12 max-w-2xl mx-auto">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+          <input type="text" placeholder="Buscar marcas o descuentos..." className="w-full bg-white border-none rounded-[2rem] py-5 pl-16 pr-6 shadow-sm font-bold text-base outline-none focus:ring-2 focus:ring-black transition-all" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {promotions.filter(p=>p.brandName.toLowerCase().includes(searchTerm.toLowerCase())).map(promo => (
-            <button key={promo.id} onClick={()=>handleClick(promo)} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-56 text-left hover:border-black transition-all group overflow-hidden relative">
-              <div className="absolute -top-4 -right-4 opacity-[0.02] text-black group-hover:opacity-[0.05]"><Zap size={100} /></div>
+            <button key={promo.id} onClick={()=>handleClick(promo)} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-64 text-left hover:border-black hover:shadow-xl transition-all group overflow-hidden relative">
+              <div className="absolute -top-4 -right-4 opacity-[0.02] text-black group-hover:opacity-[0.05] transition-opacity"><Zap size={120} /></div>
               <div className="flex justify-between items-start relative z-10 w-full">
-                <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center font-black text-white text-sm shadow-lg">{promo.brandName[0].toUpperCase()}</div>
-                <div className="bg-slate-50 p-2.5 rounded-2xl text-slate-400 group-hover:bg-[#d1ff64] group-hover:text-black transition-colors"><ExternalLink size={14} /></div>
+                <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center font-black text-white text-lg shadow-lg">{promo.brandName[0].toUpperCase()}</div>
+                <div className="bg-slate-50 p-3 rounded-2xl text-slate-400 group-hover:bg-[#d1ff64] group-hover:text-black transition-colors"><ExternalLink size={16} /></div>
               </div>
               <div className="relative z-10">
-                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-1 truncate">{promo.brandName}</h4>
-                <p className="text-xl font-black tracking-tighter text-black leading-tight mb-3 truncate">{promo.discount}</p>
-                <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 group-hover:text-black">{promo.code ? 'Copiar Código' : 'Ir a la tienda'}</p>
+                <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] mb-1 truncate">{promo.brandName}</h4>
+                <p className="text-2xl font-black tracking-tighter text-black leading-tight mb-4 truncate">{promo.discount}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 group-hover:text-black transition-colors">{promo.code ? 'Copiar Código' : 'Ir a la tienda'}</p>
               </div>
             </button>
           ))}
         </div>
-        <footer className="mt-20 text-center opacity-30"><p className="text-[8px] font-black uppercase tracking-[0.5em]">Powered by TopCodes</p></footer>
+        <footer className="mt-24 text-center opacity-30"><p className="text-[9px] font-black uppercase tracking-[0.5em]">Powered by TopCodes</p></footer>
       </div>
     </div>
   );
