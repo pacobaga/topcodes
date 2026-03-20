@@ -119,6 +119,8 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen flex bg-slate-50 overflow-hidden font-sans">
+      
+      {/* Lado Izquierdo - Solo visible en computadora */}
       <div className="hidden lg:flex flex-col justify-center w-1/2 bg-black text-white p-24 relative">
         <div className="absolute top-0 right-0 p-10 opacity-10"><Zap size={400}/></div>
         <div className="relative z-10">
@@ -127,7 +129,6 @@ function LandingPage() {
             <span className="font-black text-3xl tracking-widest uppercase">TopCodes</span>
           </div>
           
-          {/* NUEVO COPY GANADOR */}
           <h1 className="text-6xl xl:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-8">
             Aumenta <br/><span className="text-[#d1ff64]">Tus Ventas.</span>
           </h1>
@@ -137,8 +138,17 @@ function LandingPage() {
         </div>
       </div>
 
+      {/* Lado Derecho - Visible en todo, ajustado para celular */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
+          
+          {/* Título y logo móvil (Solo visible en celular para dar contexto) */}
+          <div className="lg:hidden text-center mb-8">
+            <Zap size={48} className="text-black fill-[#d1ff64] mx-auto mb-4" />
+            <h1 className="text-4xl font-black uppercase tracking-tighter italic">TopCodes</h1>
+            <p className="text-xs text-slate-500 mt-2 font-bold px-4">Aumenta tus ventas más allá de 24 horas y centraliza tus códigos.</p>
+          </div>
+
           <div className="bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border border-slate-100">
             <div className="flex gap-6 mb-10 border-b border-slate-100">
               <button onClick={() => setIsLogin(true)} className={`pb-4 font-black uppercase tracking-widest text-xs transition-all ${isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300'}`}>Ingresar</button>
@@ -210,6 +220,8 @@ function DashboardLayout({ user }) {
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
+      
+      {/* Menú de PC (Izquierda) */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col hidden lg:flex shrink-0 z-30 shadow-sm">
         <div className="p-8 flex items-center gap-3">
           <div className="bg-black p-2 rounded-xl"><Zap size={20} className="text-[#d1ff64] fill-current" /></div>
@@ -233,9 +245,19 @@ function DashboardLayout({ user }) {
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200">
-          <Zap size={24} className="text-black fill-[#d1ff64]" />
-          <button onClick={() => signOut(auth)} className="p-2 text-red-500"><LogOut size={20}/></button>
+        
+        {/* MENÚ MÓVIL (Aquí están los botones recuperados) */}
+        <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200 shadow-sm z-20 relative">
+          <div className="flex items-center gap-2">
+            <Zap size={24} className="text-black fill-[#d1ff64]" />
+            <span className="font-black uppercase tracking-tighter italic">TopCodes</span>
+          </div>
+          <div className="flex gap-1 items-center bg-slate-50 p-1 rounded-2xl">
+            <button onClick={() => setActiveTab('overview')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><LayoutDashboard size={18}/></button>
+            <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
+            <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
+            <button onClick={() => signOut(auth)} className="p-2.5 text-red-500 ml-1 hover:bg-red-50 rounded-xl"><LogOut size={18}/></button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12">
@@ -244,12 +266,12 @@ function DashboardLayout({ user }) {
               <h1 className="text-3xl font-black tracking-tighter uppercase italic">Panel de Control</h1>
               <p className="text-slate-400 text-sm font-medium mt-1">Gestiona tu marca personal y proyecta tus ganancias.</p>
             </div>
-            <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-              <div className="hidden sm:block">
+            <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 w-full md:w-auto">
+              <div className="flex-1 md:flex-none">
                 <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Link de tu Spot</p>
-                <p className="text-xs font-bold text-black font-mono truncate max-w-[200px]">{publicLink}</p>
+                <p className="text-xs font-bold text-black font-mono truncate max-w-[180px]">{publicLink}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 <button onClick={() => window.open(publicLink, '_blank')} className="bg-slate-100 text-black p-3 rounded-2xl hover:bg-slate-200 transition-all"><Eye size={16}/></button>
                 <button onClick={() => { navigator.clipboard.writeText(publicLink); }} className="bg-black text-[#d1ff64] p-3 rounded-2xl hover:scale-105 transition-all shadow-lg"><Copy size={16}/></button>
               </div>
@@ -271,15 +293,12 @@ const NavItem = ({ active, icon, label, onClick }) => (
   </button>
 );
 
-// --- PESTAÑA: OVERVIEW (NUEVAS MÉTRICAS) ---
+// --- PESTAÑA: OVERVIEW ---
 function TabOverview({ profile, promotions }) {
   const profileViews = profile.views || 0;
   const promoClicks = promotions.reduce((acc, p) => acc + (p.stats?.totalClicks || 0), 0);
   
-  // FÓRMULA PROYECCIÓN: 3% conversión, $45 MXN prom., multiplicado por un factor de 28 días
   const proj28Days = Math.floor((promoClicks * 0.03) * 45 * 2.2);
-  
-  // ÍNDICE DE PERSISTENCIA SIMULADO
   const persistenceRate = promoClicks > 5 ? "68%" : "0%";
 
   const dataChart = [
@@ -292,11 +311,11 @@ function TabOverview({ profile, promotions }) {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Vistas Spot" value={profileViews} icon={<Eye className="text-blue-500" size={24}/>} />
         <StatCard label="Clics Totales" value={promoClicks} icon={<MousePointer2 className="text-purple-500" size={24}/>} />
-        <StatCard label="Índice Persistencia" value={persistenceRate} icon={<Activity className="text-orange-500" size={24}/>} />
-        <StatCard label="Proyección (28 Días)" value={`$${proj28Days}`} icon={<TrendingUp className="text-green-500" size={24}/>} highlight />
+        <StatCard label="Persistencia" value={persistenceRate} icon={<Activity className="text-orange-500" size={24}/>} />
+        <StatCard label="Proyección" value={`$${proj28Days}`} icon={<TrendingUp className="text-green-500" size={24}/>} highlight />
       </div>
 
       <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
@@ -328,7 +347,7 @@ const StatCard = ({ label, value, icon, highlight }) => (
   <div className={`p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all hover:scale-[1.02] ${highlight ? 'bg-[#d1ff64]' : 'bg-white'}`}>
     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-sm ${highlight ? 'bg-black text-[#d1ff64]' : 'bg-slate-50'}`}>{icon}</div>
     <p className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-1 ${highlight ? 'text-black/60' : 'text-slate-400'}`}>{label}</p>
-    <p className="text-3xl md:text-4xl font-black tracking-tighter text-black">{value}</p>
+    <p className="text-2xl md:text-3xl font-black tracking-tighter text-black">{value}</p>
   </div>
 );
 
@@ -428,7 +447,7 @@ function TabProfile({ user, profile }) {
   };
 
   return (
-    <div className="max-w-2xl bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in duration-700">
+    <div className="max-w-2xl bg-white p-8 md:p-12 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in duration-700">
       <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 flex items-center gap-3"><Settings size={24}/> Ajustes de Perfil</h2>
       {msg && <div className="bg-green-50 text-green-600 p-4 rounded-2xl text-xs font-bold mb-8">{msg}</div>}
       <form onSubmit={handleSave} className="space-y-8">
@@ -492,7 +511,6 @@ function SuperAdmin() {
     setUsers(snap.docs.map(d => d.data()));
   };
 
-  // Función para guardar los cambios del usuario editado
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
@@ -501,12 +519,9 @@ function SuperAdmin() {
       alert("Usuario actualizado correctamente.");
       setEditingUser(null);
       fetchUsers();
-    } catch (err) {
-      alert("Error al actualizar: " + err.message);
-    }
+    } catch (err) { alert("Error al actualizar: " + err.message); }
   };
 
-  // Función para eliminar un usuario definitivamente
   const handleDeleteUser = async (username, uid) => {
     if(!window.confirm(`¿Seguro que deseas eliminar a @${username}? Esta acción no se puede deshacer.`)) return;
     try {
@@ -515,9 +530,7 @@ function SuperAdmin() {
       alert("Usuario eliminado del sistema.");
       setEditingUser(null);
       fetchUsers();
-    } catch (err) {
-      alert("Error al eliminar: " + err.message);
-    }
+    } catch (err) { alert("Error al eliminar: " + err.message); }
   };
 
   if (!authenticated) return (
@@ -537,12 +550,12 @@ function SuperAdmin() {
     <div className="min-h-screen bg-slate-50 p-8 font-sans relative">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-10">
-          <h1 className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-4"><Users size={32} className="text-blue-600"/> Master Directory</h1>
-          <Link to="/" className="text-xs font-bold text-slate-400 hover:text-black uppercase tracking-widest transition-colors">Volver a TopCodes</Link>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic flex items-center gap-4"><Users size={32} className="text-blue-600"/> Master Directory</h1>
+          <Link to="/" className="text-[10px] md:text-xs font-bold text-slate-400 hover:text-black uppercase tracking-widest transition-colors">Volver a TopCodes</Link>
         </div>
         
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
-          <table className="w-full text-left">
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+          <table className="w-full text-left min-w-[600px]">
             <thead className="bg-slate-50 text-[10px] uppercase tracking-[0.2em] text-slate-400">
               <tr><th className="p-6">Influencer</th><th className="p-6">Email</th><th className="p-6">Nicho</th><th className="p-6 text-center">Vistas</th><th className="p-6 text-right">Acciones</th></tr>
             </thead>
@@ -566,13 +579,11 @@ function SuperAdmin() {
         </div>
       </div>
 
-      {/* MODAL DE EDICIÓN (Aparece cuando seleccionas a un usuario) */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
             <h2 className="text-2xl font-black mb-6 italic uppercase tracking-tighter">Editar @{editingUser.username}</h2>
             <form onSubmit={handleUpdateUser} className="space-y-5">
-              
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Nicho</label>
                 <select className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={editingUser.category} onChange={e => setEditingUser({...editingUser, category: e.target.value})}>
@@ -580,22 +591,18 @@ function SuperAdmin() {
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Ciudades</label>
                 <input type="text" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={editingUser.cities} onChange={e => setEditingUser({...editingUser, cities: e.target.value})}/>
               </div>
-
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Email (Solo Lectura)</label>
                 <input type="email" disabled className="w-full bg-slate-100 border-none rounded-2xl p-4 text-sm font-bold text-slate-400 outline-none cursor-not-allowed" value={editingUser.email} />
               </div>
-
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors">Cancelar</button>
                 <button type="submit" className="flex-1 bg-[#d1ff64] text-black py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Guardar</button>
               </div>
-
               <div className="pt-6 border-t border-slate-100 text-center">
                 <button type="button" onClick={() => handleDeleteUser(editingUser.username, editingUser.uid)} className="text-red-500 text-[10px] font-black uppercase tracking-widest hover:text-red-600 transition-colors flex items-center justify-center gap-2 w-full">
                   <Trash2 size={12}/> Eliminar Influencer
@@ -657,7 +664,6 @@ function PublicSpot() {
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">@{publicProfile.username}</h2>
           <p className="text-sm md:text-base font-bold text-slate-400 mt-4 max-w-lg mx-auto italic">{publicProfile.bio}</p>
           
-          {/* SOCIAL LINKS */}
           <div className="flex justify-center gap-3 mt-6">
             <a href={`https://instagram.com/${publicProfile.username}`} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-pink-600">
               <Instagram size={20} />
