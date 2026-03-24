@@ -9,6 +9,7 @@ import {
   getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, 
   onSnapshot, deleteDoc, getDocs, query, where, increment 
 } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
   Copy, Plus, Trash2, LogOut, User, Zap, Tag, MapPin, 
   ExternalLink, Link2, Search, Instagram, Eye, LayoutDashboard, 
@@ -35,6 +36,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const appId = 'topcodes-mvp-v1';
 
 const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología", "Lifestyle", "Viajes", "Fitness", "Gaming"];
@@ -201,17 +203,22 @@ function DashboardLayout({ user }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadData = async () => {
-      const docSnap = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'));
+    // Vigilante del Perfil en tiempo real
+    const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
+    const unsubProfile = onSnapshot(profileRef, (docSnap) => {
       if (docSnap.exists()) setProfile(docSnap.data());
-      
-      const promoCol = collection(db, 'artifacts', appId, 'users', user.uid, 'promotions');
-      const unsub = onSnapshot(promoCol, (snapshot) => {
-        setPromotions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-      });
-      return unsub;
+    });
+    
+    // Vigilante de las Promociones en tiempo real
+    const promoCol = collection(db, 'artifacts', appId, 'users', user.uid, 'promotions');
+    const unsubPromos = onSnapshot(promoCol, (snapshot) => {
+      setPromotions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    
+    return () => {
+      unsubProfile();
+      unsubPromos();
     };
-    loadData();
   }, [user]);
 
   if (!profile) return <LoadingScreen />;
@@ -246,7 +253,7 @@ function DashboardLayout({ user }) {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
-        {/* MENÚ MÓVIL (Aquí están los botones recuperados) */}
+        {/* MENÚ MÓVIL */}
         <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200 shadow-sm z-20 relative">
           <div className="flex items-center gap-2">
             <Zap size={24} className="text-black fill-[#d1ff64]" />
@@ -437,6 +444,18 @@ function TabProfile({ user, profile }) {
     xUrl: profile.xUrl || ''
   });
   const [msg, setMsg] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  // El vigilante para que no se borren los links
+  useEffect(() => {
+    setFormData({
+      bio: profile.bio || '', 
+      photoUrl: profile.photoUrl || '',
+      tiktokUrl: profile.tiktokUrl || '',
+      youtubeUrl: profile.youtubeUrl || '',
+      xUrl: profile.xUrl || ''
+    });
+  }, [profile]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -446,10 +465,51 @@ function TabProfile({ user, profile }) {
     setTimeout(() => setMsg(''), 3000);
   };
 
+  // El motor mágico que sube la foto a tu disco duro de Firebase
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    setMsg(''); // Limpia mensajes anteriores
+
+    try {
+      // 1. Prepara el nombre del archivo en la nube
+      const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/profilePic`);
+      
+      // 2. Sube la imagen
+      await uploadBytes(fileRef, file);
+      
+      // 3. Pide el link público permanente
+      const url = await getDownloadURL(fileRef);
+      
+      // 4. Lo guarda automáticamente para que el influencer no tenga que hacer nada más
+      await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), { photoUrl: url });
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), { photoUrl: url });
+      
+      setFormData(prev => ({ ...prev, photoUrl: url }));
+      setMsg('¡Foto subida y guardada con éxito!');
+      setTimeout(() => setMsg(''), 3000);
+      
+    } catch (error) {
+      // AQUÍ ESTÁ EL CAPTURADOR DE ERRORES REALES
+      console.error("Error completo:", error);
+      setMsg(`ERROR FIREBASE: ${error.code} - ${error.message}`);
+    }
+    setUploading(false);
+  };
+
   return (
     <div className="max-w-2xl bg-white p-8 md:p-12 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in duration-700">
       <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 flex items-center gap-3"><Settings size={24}/> Ajustes de Perfil</h2>
-      {msg && <div className="bg-green-50 text-green-600 p-4 rounded-2xl text-xs font-bold mb-8">{msg}</div>}
+      
+      {/* Mensajes de éxito o error */}
+      {msg && (
+        <div className={`p-4 rounded-2xl text-xs font-bold mb-8 ${msg.includes('ERROR') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+          {msg}
+        </div>
+      )}
+
       <form onSubmit={handleSave} className="space-y-8">
         
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -457,10 +517,23 @@ function TabProfile({ user, profile }) {
           <p className="text-lg font-black text-black italic">@{profile.username}</p>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><ImageIcon size={14}/> Foto de Perfil (URL)</label>
-          <input type="url" placeholder="https://..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.photoUrl} onChange={e=>setFormData({...formData, photoUrl: e.target.value})}/>
+        {/* --- NUEVO BOTÓN DE SUBIR FOTO --- */}
+        <div className="space-y-3 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2"><ImageIcon size={14}/> Foto de Perfil</label>
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
+               {formData.photoUrl ? <img src={formData.photoUrl} className="w-full h-full object-cover" /> : <User size={40} className="text-slate-300" />}
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <label className={`cursor-pointer bg-black text-[#d1ff64] px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all inline-block shadow-lg ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
+                {uploading ? 'Subiendo...' : 'Subir Foto'}
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
+              </label>
+              <p className="text-[10px] font-bold text-slate-400 mt-4 leading-relaxed max-w-sm">Te recomendamos subir la <strong className="text-black">misma foto de tu Instagram</strong> para que tus seguidores reconozcan tu Spot al instante.</p>
+            </div>
+          </div>
         </div>
+
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase text-slate-400 ml-4">Biografía / Presentación</label>
           <textarea rows="4" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none resize-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.bio} onChange={e=>setFormData({...formData, bio: e.target.value})}></textarea>
