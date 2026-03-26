@@ -338,6 +338,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
 function TabPromotions({ user, profile, promotions }) {
   const [newPromo, setNewPromo] = useState({ 
     brandName: '', 
+    brandDomain: '', // <-- NUEVO: Para la magia del logo
     discount: '', 
     code: '', 
     originalUrl: '',
@@ -345,32 +346,12 @@ function TabPromotions({ user, profile, promotions }) {
     commissionType: '%',
     commissionValue: ''
   });
-  const [promoLogoUrl, setPromoLogoUrl] = useState('');
-  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 2097152) {
-      alert("⚠️ La imagen es muy pesada. Por favor sube un logo menor a 2MB.");
-      return;
-    }
-
-    setUploadingLogo(true);
-    try {
-      const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/brands/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
-      setPromoLogoUrl(url);
-    } catch (error) {
-      alert(`❌ Error técnico al subir: ${error.message}`);
-    } finally {
-      setUploadingLogo(false);
-    }
-  };
+  // LA MAGIA: Limpia la URL que escribe el usuario y trae el logo de Clearbit
+  const getCleanDomain = (domain) => domain.replace(/^https?:\/\//, '').split('/')[0].trim();
+  const previewLogoUrl = newPromo.brandDomain ? `https://logo.clearbit.com/${getCleanDomain(newPromo.brandDomain)}` : '';
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -383,14 +364,14 @@ function TabPromotions({ user, profile, promotions }) {
       trackedUrl = urlObj.toString();
     } catch (e) { 
       setLoading(false);
-      return alert("Ingresa una URL válida que empiece con http:// o https://"); 
+      return alert("Ingresa una URL de Afiliado válida que empiece con http:// o https://"); 
     }
 
     try {
       const promoData = {
         ...newPromo,
         trackedUrl,
-        logoUrl: promoLogoUrl,
+        logoUrl: previewLogoUrl, // Guarda el link del logo mágico
         stats: { totalClicks: 0 },
         createdAt: new Date().toISOString()
       };
@@ -403,8 +384,8 @@ function TabPromotions({ user, profile, promotions }) {
         ...promoData
       });
 
-      setNewPromo({ brandName: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '' });
-      setPromoLogoUrl('');
+      // Limpia el formulario
+      setNewPromo({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '' });
       setMsg('✅ ¡Deal publicado con éxito!');
       setTimeout(() => setMsg(''), 4000);
     } catch (error) {
@@ -426,32 +407,50 @@ function TabPromotions({ user, profile, promotions }) {
           <h3 className="text-lg font-black uppercase tracking-tighter italic mb-8 flex items-center gap-3"><Plus size={20}/> Nuevo Link / Cupón</h3>
           <form onSubmit={handleAdd} className="space-y-6">
             
+            {/* SECCIÓN: Marca y Logo Mágico */}
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
-                  {promoLogoUrl ? <img src={promoLogoUrl} alt="Logo" className="w-full h-full object-cover"/> : <ImageIcon size={24} className="text-slate-300"/>}
+                <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden relative">
+                  {/* Si hay logo, lo muestra. Si el link falla, lo oculta y muestra la inicial */}
+                  {previewLogoUrl ? (
+                    <img src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'} />
+                  ) : null}
+                  <span className="absolute inset-0 flex items-center justify-center font-black text-slate-300 text-xl">
+                    {newPromo.brandName ? newPromo.brandName.charAt(0).toUpperCase() : <ImageIcon size={24}/>}
+                  </span>
                 </div>
                 <div className="flex-1">
-                  <label className={`cursor-pointer bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-colors inline-block shadow-sm ${uploadingLogo ? 'opacity-50 cursor-wait' : ''}`}>
-                    {uploadingLogo ? 'Subiendo...' : 'Subir Logo Marca'}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
-                  </label>
-                  <p className="text-[9px] font-bold text-slate-400 mt-2">Sube el logo oficial (Opcional).</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-black mb-1">Logo Inteligente</p>
+                  <p className="text-[10px] font-bold text-slate-400">Escribe el sitio web de la marca y nosotros buscamos su logo oficial automáticamente.</p>
                 </div>
               </div>
               
-              <div className="flex gap-4">
-                <input type="text" placeholder="Marca (ej. Sephora)" required className="w-1/2 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brandName} onChange={e => setNewPromo({...newPromo, brandName: e.target.value})}/>
-                <select required className="w-1/2 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}>
-                  <option value="" disabled>Nicho de la Marca</option>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="text" placeholder="Marca (ej. Sephora)" required className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brandName} onChange={e => setNewPromo({...newPromo, brandName: e.target.value})}/>
+                <input type="text" placeholder="Web (ej. sephora.com.mx)" className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brandDomain} onChange={e => setNewPromo({...newPromo, brandDomain: e.target.value})}/>
+                <select required className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}>
+                  <option value="" disabled>Nicho</option>
+                  <option value="Salud y Belleza">Salud y Belleza</option>
+                  <option value="Deportes">Deportes</option>
+                  <option value="Moda y Estilo">Moda y Estilo</option>
+                  <option value="Tecnología">Tecnología</option>
+                  <option value="Lifestyle">Lifestyle</option>
+                  <option value="Viajes">Viajes</option>
+                  <option value="Fitness">Fitness</option>
+                  <option value="Gaming">Gaming</option>
+                  <option value="Comedia">Comedia</option>
+                  <option value="Educación">Educación</option>
+                  <option value="Finanzas">Finanzas / Negocios</option>
+                  <option value="Foodie">Foodie / Gastronomía</option>
+                  <option value="Arte">Arte y Diseño</option>
+                  <option value="Otro">Otro</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="Oferta (20% OFF)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={newPromo.discount} onChange={e => setNewPromo({...newPromo, discount: e.target.value})}/>
-              <input type="text" placeholder="Código Cupón (ej. STEF20)" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={newPromo.code} onChange={e => setNewPromo({...newPromo, code: e.target.value})}/>
+              <input type="text" placeholder="Oferta (ej. 20% OFF)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={newPromo.discount} onChange={e => setNewPromo({...newPromo, discount: e.target.value})}/>
+              <input type="text" placeholder="Código Cupón (ej. STEF20)" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={newPromo.code} onChange={e => setNewPromo({...newPromo, code: e.target.value})}/>
             </div>
             <input type="url" placeholder="Link de Afiliado Directo" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={newPromo.originalUrl} onChange={e => setNewPromo({...newPromo, originalUrl: e.target.value})}/>
             
@@ -474,34 +473,39 @@ function TabPromotions({ user, profile, promotions }) {
           </form>
         </div>
 
+        {/* LISTA DE DEALS ACTIVOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promotions.map(promo => (
-            <div key={promo.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group">
+            <div key={promo.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-black transition-colors">
               <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-black text-xs shrink-0 overflow-hidden border border-slate-200">
-                  {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover"/> : (promo.brandName ? promo.brandName.charAt(0).toUpperCase() : '?')}
+                 <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black text-sm shrink-0 overflow-hidden border border-slate-200 relative">
+                  {promo.logoUrl ? (
+                    <img src={promo.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
+                  ) : null}
+                  <span className="absolute inset-0 flex items-center justify-center">{promo.brandName ? promo.brandName.charAt(0).toUpperCase() : '?'}</span>
                  </div>
                  <div>
-                    <h4 className="font-black text-sm leading-none">{promo.brandName}</h4>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1">{promo.discount}</p>
-                    <p className="mt-1 text-[9px] font-black text-[#8b5cf6]">Ganas: {promo.commissionValue}{promo.commissionType}</p>
+                    <h4 className="font-black text-sm leading-none mb-1">{promo.brandName}</h4>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{promo.discount}</p>
+                    <p className="mt-2 text-[9px] font-black text-[#8b5cf6]">Ganas: {promo.commissionValue}{promo.commissionType}</p>
                  </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-center">
-                   <p className="text-lg font-black leading-none">{promo.stats?.totalClicks || 0}</p>
+                   <p className="text-xl font-black leading-none">{promo.stats?.totalClicks || 0}</p>
                    <p className="text-[8px] font-black text-slate-300 uppercase">Clics</p>
                 </div>
-                <button onClick={() => handleDelete(promo.id)} className="p-3 text-slate-300 hover:text-red-500 bg-slate-50 rounded-xl transition-colors"><Trash2 size={18}/></button>
+                <button onClick={() => handleDelete(promo.id)} className="p-3 text-slate-300 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-xl transition-colors"><Trash2 size={18}/></button>
               </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* SIMULADOR MÓVIL */}
       <div className="hidden xl:flex flex-col items-center w-[380px] shrink-0 sticky top-10 h-[750px]">
         <div className="w-[320px] h-[650px] bg-white rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden relative">
-          <div className="absolute top-0 w-full h-8 bg-slate-900 rounded-b-3xl flex justify-center items-center"><div className="w-16 h-4 bg-black rounded-b-2xl"></div></div>
+          <div className="absolute top-0 w-full h-8 bg-slate-900 rounded-b-3xl flex justify-center items-center z-20"><div className="w-16 h-4 bg-black rounded-b-2xl"></div></div>
           <div className="h-full w-full overflow-y-auto pt-14 pb-8 px-6 bg-[#fdfdfd] text-center">
             <div className="w-20 h-20 bg-slate-100 rounded-[2rem] mx-auto mb-4 border border-slate-200 overflow-hidden flex items-center justify-center">
                {profile.photoUrl ? <img src={profile.photoUrl} className="w-full h-full object-cover" /> : <User size={30} className="text-slate-300" />}
@@ -511,8 +515,11 @@ function TabPromotions({ user, profile, promotions }) {
             <div className="mt-8 space-y-3">
               {promotions.map(p => (
                 <div key={p.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 text-left relative overflow-hidden flex items-center gap-3">
-                  <div className="w-10 h-10 bg-black rounded-xl text-[#d1ff64] flex items-center justify-center font-black text-[12px] overflow-hidden shrink-0">
-                    {p.logoUrl ? <img src={p.logoUrl} className="w-full h-full object-cover"/> : (p.brandName ? p.brandName[0].toUpperCase() : '?')}
+                  <div className="w-10 h-10 bg-black rounded-xl text-[#d1ff64] flex items-center justify-center font-black text-[12px] overflow-hidden shrink-0 relative">
+                    {p.logoUrl ? (
+                      <img src={p.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
+                    ) : null}
+                    <span className="absolute inset-0 flex items-center justify-center">{p.brandName ? p.brandName[0].toUpperCase() : '?'}</span>
                   </div>
                   <div className="flex-1">
                     <h4 className="text-[9px] font-black uppercase text-slate-300 tracking-widest leading-none mb-1">{p.brandName}</h4>
