@@ -346,6 +346,7 @@ function TabPromotions({ user, profile, promotions }) {
     commissionType: '%',
     commissionValue: ''
   });
+  const [editingId, setEditingId] = useState(null); // NUEVO: Saber si estamos editando
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -361,11 +362,9 @@ function TabPromotions({ user, profile, promotions }) {
   
   const cleanDomain = getCleanDomain(newPromo.brandDomain);
   const isValidDomain = cleanDomain.includes('.');
-  
-  // NUEVO MOTOR: Usamos la API pública de Google que nunca es bloqueada
   const previewLogoUrl = isValidDomain ? `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=256` : '';
 
-  const handleAdd = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
     let trackedUrl = newPromo.originalUrl;
@@ -381,28 +380,64 @@ function TabPromotions({ user, profile, promotions }) {
 
     try {
       const promoData = {
-        ...newPromo,
+        brandName: newPromo.brandName,
+        brandDomain: newPromo.brandDomain || '',
+        discount: newPromo.discount,
+        code: newPromo.code,
+        originalUrl: newPromo.originalUrl,
+        niche: newPromo.niche,
+        commissionType: newPromo.commissionType || '%',
+        commissionValue: newPromo.commissionValue || '',
         trackedUrl,
-        logoUrl: previewLogoUrl,
-        stats: { totalClicks: 0 },
-        createdAt: new Date().toISOString()
+        logoUrl: previewLogoUrl
       };
 
-      const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'promotions'), promoData);
-      
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), {
-        ownerId: user.uid,
-        username: profile.username,
-        ...promoData
-      });
+      if (editingId) {
+        // ACTUALIZAR DEAL EXISTENTE
+        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', editingId), promoData);
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', editingId), promoData);
+        setMsg('✅ ¡Deal actualizado con éxito!');
+      } else {
+        // CREAR NUEVO DEAL
+        promoData.stats = { totalClicks: 0 };
+        promoData.createdAt = new Date().toISOString();
+        const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'promotions'), promoData);
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), {
+          ownerId: user.uid,
+          username: profile.username,
+          ...promoData
+        });
+        setMsg('✅ ¡Deal publicado con éxito!');
+      }
 
-      setNewPromo({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '' });
-      setMsg('✅ ¡Deal publicado con éxito!');
+      // Limpiamos todo
+      handleCancelEdit();
       setTimeout(() => setMsg(''), 4000);
     } catch (error) {
       setMsg(`❌ Error: ${error.message}`);
     }
     setLoading(false);
+  };
+
+  const handleEditClick = (promo) => {
+    setNewPromo({
+      brandName: promo.brandName || '',
+      brandDomain: promo.brandDomain || '',
+      discount: promo.discount || '',
+      code: promo.code || '',
+      originalUrl: promo.originalUrl || '',
+      niche: promo.niche || '',
+      commissionType: promo.commissionType || '%',
+      commissionValue: promo.commissionValue || ''
+    });
+    setEditingId(promo.id);
+    // Un toque pro: sube la pantalla suavemente hacia el formulario
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setNewPromo({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '' });
+    setEditingId(null);
   };
 
   const handleDelete = async (promoId) => {
@@ -414,14 +449,23 @@ function TabPromotions({ user, profile, promotions }) {
   return (
     <div className="flex flex-col xl:flex-row gap-12 animate-in fade-in duration-700">
       <div className="flex-1 space-y-10">
-        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
-          <h3 className="text-lg font-black uppercase tracking-tighter italic mb-8 flex items-center gap-3"><Plus size={20}/> Nuevo Link / Cupón</h3>
-          <form onSubmit={handleAdd} className="space-y-6">
-            
+        
+        {/* EL FORMULARIO */}
+        <div className={`bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border ${editingId ? 'border-black shadow-lg' : 'border-slate-100'} transition-all`}>
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-lg font-black uppercase tracking-tighter italic flex items-center gap-3">
+              {editingId ? <Settings size={20} className="text-[#8b5cf6]"/> : <Plus size={20}/>}
+              {editingId ? 'Editar Deal' : 'Nuevo Link / Cupón'}
+            </h3>
+            {editingId && (
+              <button onClick={handleCancelEdit} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors">Cancelar</button>
+            )}
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-6">
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden relative">
-                  {/* Imagen procesada por Google */}
                   {previewLogoUrl ? (
                     <img key={previewLogoUrl} src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10 p-2" />
                   ) : null}
@@ -476,13 +520,14 @@ function TabPromotions({ user, profile, promotions }) {
                </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest hover:brightness-110 shadow-xl transition-all disabled:opacity-50">
-              {loading ? 'Guardando...' : 'Publicar Deal'}
+            <button type="submit" disabled={loading} className={`w-full ${editingId ? 'bg-[#8b5cf6] text-white hover:bg-[#7c3aed]' : 'bg-black text-[#d1ff64] hover:brightness-110'} py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all disabled:opacity-50`}>
+              {loading ? 'Guardando...' : (editingId ? 'Actualizar Deal' : 'Publicar Deal')}
             </button>
             {msg && <div className="text-center text-xs font-bold text-green-600 mt-2">{msg}</div>}
           </form>
         </div>
 
+        {/* LISTA DE DEALS ACTIVOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promotions.map(promo => (
             <div key={promo.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-black transition-colors">
@@ -504,13 +549,19 @@ function TabPromotions({ user, profile, promotions }) {
                    <p className="text-xl font-black leading-none">{promo.stats?.totalClicks || 0}</p>
                    <p className="text-[8px] font-black text-slate-300 uppercase">Clics</p>
                 </div>
-                <button onClick={() => handleDelete(promo.id)} className="p-3 text-slate-300 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-xl transition-colors"><Trash2 size={18}/></button>
+                <div className="flex flex-col gap-1">
+                  {/* BOTÓN EDITAR */}
+                  <button onClick={() => handleEditClick(promo)} title="Editar" className="p-2 text-slate-300 hover:text-[#8b5cf6] bg-slate-50 hover:bg-purple-50 rounded-lg transition-colors"><Settings size={14}/></button>
+                  {/* BOTÓN ELIMINAR */}
+                  <button onClick={() => handleDelete(promo.id)} title="Eliminar" className="p-2 text-slate-300 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={14}/></button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* SIMULADOR MÓVIL (Se mantiene igual) */}
       <div className="hidden xl:flex flex-col items-center w-[380px] shrink-0 sticky top-10 h-[750px]">
         <div className="w-[320px] h-[650px] bg-white rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden relative">
           <div className="absolute top-0 w-full h-8 bg-slate-900 rounded-b-3xl flex justify-center items-center z-20"><div className="w-16 h-4 bg-black rounded-b-2xl"></div></div>
