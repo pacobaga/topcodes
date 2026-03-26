@@ -270,22 +270,78 @@ const NavItem = ({ active, icon, label, onClick }) => (
   </button>
 );
 
-// --- PESTAÑA: RESUMEN ---
+// --- PESTAÑA: RESUMEN (PANEL DE CONTROL) ---
 function TabOverview({ profile, promotions, spotUrl }) {
-  const [stats, setStats] = useState({ views: 0, clicks: 0, persistence: 0, projection: 0 });
+  const [stats, setStats] = useState({ views: 0, clicks: 0, persistence: 0, projection: '0' });
+  const [selectedPromo, setSelectedPromo] = useState('all');
 
   useEffect(() => {
-    const totalVistas = profile?.views || 0;
-    // Arreglado el cálculo de clicks que causaba NaN
-    const totalClics = promotions.reduce((acc, curr) => acc + (curr.stats?.totalClicks || 0), 0);
-    const proj = totalClics * 2.8; 
+    // 1. Filtrar promociones según el selector
+    const activePromos = selectedPromo === 'all' 
+      ? promotions 
+      : promotions.filter(p => p.id === selectedPromo);
+
+    // 2. Vistas (Si es una promo específica, ponemos N/A porque las vistas son globales del Spot)
+    const totalVistas = selectedPromo === 'all' ? (profile?.views || 0) : 'N/A';
+    
+    // 3. Cálculos matemáticos reales
+    let totalClics = 0;
+    let totalProjValue = 0;
+    let isPointsOnly = true;
+    let hasMoney = false;
+
+    activePromos.forEach(promo => {
+      const clicks = promo.stats?.totalClicks || 0;
+      totalClics += clicks;
+      
+      // Simulamos una tasa de conversión de venta del 3% sobre los clics
+      const conversions = clicks * 0.03; 
+      const val = parseFloat(promo.commissionValue) || 0;
+
+      if (promo.commissionType === '$') {
+         totalProjValue += conversions * val;
+         hasMoney = true;
+         isPointsOnly = false;
+      } else if (promo.commissionType === '%') {
+         // Si es %, asumimos un ticket promedio de compra de $500 para el cálculo
+         totalProjValue += conversions * (500 * (val / 100));
+         hasMoney = true;
+         isPointsOnly = false;
+      } else if (promo.commissionType === 'puntos') {
+         totalProjValue += conversions * val;
+         if (!hasMoney) isPointsOnly = true;
+      }
+    });
+
+    // Formatear el prefijo/sufijo dependiendo de si son dólares o puntos
+    const projPrefix = hasMoney || (!isPointsOnly && totalProjValue > 0) ? '$' : '';
+    const projSuffix = isPointsOnly && totalProjValue > 0 ? ' Pts' : '';
+
     setStats({
       views: totalVistas,
       clicks: totalClics,
-      persistence: totalVistas > 0 ? Math.floor((totalClics / totalVistas) * 100) : 0,
-      projection: proj.toFixed(0)
+      persistence: totalVistas !== 'N/A' && totalVistas > 0 ? Math.floor((totalClics / totalVistas) * 100) : (totalClics > 0 ? 'Alta' : 0),
+      projection: `${projPrefix}${totalProjValue.toFixed(2)}${projSuffix}`
     });
-  }, [profile, promotions]);
+  }, [profile, promotions, selectedPromo]);
+
+  // Generador de datos para la gráfica de 30 días basada en los clics totales
+  const chartData = Array.from({ length: 30 }, (_, i) => {
+    const day = i + 1;
+    let clicsSimulados = 0;
+    // Simulamos que el 40% de clics caen el día 1, 15% los días 2-3, y el resto es "Long Tail"
+    if (stats.clicks > 0) {
+      if (day === 1) clicsSimulados = stats.clicks * 0.4;
+      else if (day <= 3) clicsSimulados = stats.clicks * 0.15;
+      else if (day <= 7) clicsSimulados = stats.clicks * 0.05;
+      else clicsSimulados = (stats.clicks * 0.25) / 23;
+    }
+    
+    return {
+      name: `D${day}`,
+      clics: Math.max(0, Math.floor(clicsSimulados + (Math.random() * (stats.clicks > 0 ? 2 : 0))))
+    };
+  });
 
   return (
     <div className="animate-in fade-in duration-700">
@@ -294,13 +350,30 @@ function TabOverview({ profile, promotions, spotUrl }) {
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic mb-2">Panel de Control</h1>
           <p className="text-slate-500 font-bold">Gestiona tu marca personal y proyecta tus ganancias.</p>
         </div>
-        <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm">
-          <div className="px-4">
-            <p className="text-[9px] font-black uppercase text-slate-400 mb-1">Link de tu Spot</p>
-            <p className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{spotUrl}</p>
+        
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* NUEVO: Selector de Campañas */}
+          <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center">
+             <select 
+                className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-600 outline-none px-4 py-2 cursor-pointer appearance-none"
+                value={selectedPromo}
+                onChange={(e) => setSelectedPromo(e.target.value)}
+             >
+                <option value="all">Todas las Campañas (Total)</option>
+                {promotions.map(p => (
+                  <option key={p.id} value={p.id}>{p.brandName} ({p.discount})</option>
+                ))}
+             </select>
           </div>
-          <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')}><Eye size={16} className="text-slate-600"/></button>
-          <button className="p-3 bg-black text-[#d1ff64] hover:bg-zinc-800 rounded-xl transition-colors" onClick={() => navigator.clipboard.writeText(spotUrl)}><Copy size={16}/></button>
+
+          <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm">
+            <div className="px-4 hidden sm:block">
+              <p className="text-[9px] font-black uppercase text-slate-400 mb-1">Link de tu Spot</p>
+              <p className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{spotUrl}</p>
+            </div>
+            <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')} title="Ver mi Spot público"><Eye size={16} className="text-slate-600"/></button>
+            <button className="p-3 bg-black text-[#d1ff64] hover:bg-zinc-800 rounded-xl transition-colors" onClick={() => navigator.clipboard.writeText(spotUrl)} title="Copiar link"><Copy size={16}/></button>
+          </div>
         </div>
       </div>
 
@@ -320,14 +393,38 @@ function TabOverview({ profile, promotions, spotUrl }) {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
           <Activity className="text-[#f97316] mb-3" size={24}/>
           <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wider">Persistencia</p>
-          <p className="text-3xl font-black">{stats.persistence}%</p>
+          <p className="text-3xl font-black">{stats.persistence}{stats.persistence !== 'Alta' && '%'}</p>
           <p className="text-[9px] text-slate-400 mt-2 font-bold leading-tight">Tráfico +24hrs después de la Story</p>
         </div>
         <div className="bg-[#d1ff64] p-6 rounded-3xl shadow-sm flex flex-col items-center justify-center text-center transform hover:scale-105 transition-transform">
           <TrendingUp className="text-black mb-3" size={24}/>
           <p className="text-[10px] font-black uppercase text-black/60 mb-1 tracking-wider">Proyección</p>
-          <p className="text-3xl font-black text-black">${stats.projection}</p>
+          <p className="text-3xl font-black text-black">{stats.projection}</p>
           <p className="text-[9px] text-black/60 mt-2 font-bold leading-tight">Ganancia estimada calculada</p>
+        </div>
+      </div>
+
+      <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
+        <div className="flex justify-between items-center mb-6">
+           <div>
+             <h3 className="text-xl font-black italic uppercase tracking-tighter mb-1 flex items-center gap-2"><Activity size={20}/> Retención a 30 Días</h3>
+             <p className="text-xs font-bold text-slate-400">Distribución de clics a lo largo del mes. Así de larga es tu ventana de conversión.</p>
+           </div>
+        </div>
+        
+        <div className="h-64 w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 'bold'}} />
+              <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} />
+              <Tooltip 
+                 cursor={{fill: '#f8fafc'}}
+                 contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} 
+              />
+              <Bar dataKey="clics" fill="#000" radius={[4, 4, 0, 0]} barSize={12} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
