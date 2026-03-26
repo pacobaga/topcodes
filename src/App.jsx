@@ -22,7 +22,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 // ==========================================
 // 1. CONFIGURACIÓN FIREBASE 
 // ==========================================
-// REEMPLAZA ESTOS VALORES CON LOS DE TU CONSOLA DE FIREBASE
+// ⚠️ RECUERDA PEGAR TUS CLAVES REALES AQUÍ:
 const firebaseConfig = {
   apiKey: "AIzaSyBwZyz9UqDCGY7wbO2B2cGPSAkqebx4iV4",
   authDomain: "top-codes-7208c.firebaseapp.com",
@@ -39,7 +39,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const appId = 'topcodes-mvp-v1';
 
-const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología", "Lifestyle", "Viajes", "Fitness", "Gaming"];
+const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología", "Lifestyle", "Viajes", "Fitness", "Gaming", "Comedia", "Educación", "Finanzas", "Foodie", "Arte", "Otro"];
 
 // ==========================================
 // COMPONENTE PRINCIPAL (ENRUTADOR)
@@ -123,8 +123,6 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen flex bg-slate-50 overflow-hidden font-sans">
-      
-      {/* Lado Izquierdo - Solo visible en computadora */}
       <div className="hidden lg:flex flex-col justify-center w-1/2 bg-black text-white p-24 relative">
         <div className="absolute top-0 right-0 p-10 opacity-10"><Zap size={400}/></div>
         <div className="relative z-10">
@@ -132,7 +130,6 @@ function LandingPage() {
             <Zap size={32} className="text-[#d1ff64] fill-current" />
             <span className="font-black text-3xl tracking-widest uppercase">TopCodes</span>
           </div>
-          
           <h1 className="text-6xl xl:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-8">
             Aumenta <br/><span className="text-[#d1ff64]">Tus Ventas.</span>
           </h1>
@@ -142,11 +139,8 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* Lado Derecho - Visible en todo, ajustado para celular */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
-          
-          {/* Título y logo móvil */}
           <div className="lg:hidden text-center mb-8">
             <Zap size={48} className="text-black fill-[#d1ff64] mx-auto mb-4" />
             <h1 className="text-4xl font-black uppercase tracking-tighter italic">TopCodes</h1>
@@ -166,25 +160,11 @@ function LandingPage() {
               {!isLogin && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                   <input type="text" placeholder="Usuario de Instagram (@...)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
-                  
                   <div className="flex gap-4">
                     <div className="w-1/2">
                       <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={category} onChange={e=>setCategory(e.target.value)}>
                         <option value="" disabled>Nicho</option>
-                        <option value="Salud y Belleza">Salud y Belleza</option>
-                        <option value="Deportes">Deportes</option>
-                        <option value="Moda y Estilo">Moda y Estilo</option>
-                        <option value="Tecnología">Tecnología</option>
-                        <option value="Lifestyle">Lifestyle</option>
-                        <option value="Viajes">Viajes</option>
-                        <option value="Fitness">Fitness</option>
-                        <option value="Gaming">Gaming</option>
-                        <option value="Comedia">Comedia</option>
-                        <option value="Educación">Educación</option>
-                        <option value="Finanzas">Finanzas / Negocios</option>
-                        <option value="Foodie">Foodie / Gastronomía</option>
-                        <option value="Arte">Arte y Diseño</option>
-                        <option value="Otro">Otro</option>
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                       <p className="text-[9px] text-slate-400 mt-2 font-bold pl-2">Categoría principal.</p>
                     </div>
@@ -222,25 +202,19 @@ function DashboardLayout({ user }) {
   const [profile, setProfile] = useState(null);
   const [promotions, setPromotions] = useState([]);
   const [activeTab, setActiveTab] = useState('overview'); 
-  const navigate = useNavigate();
 
   useEffect(() => {
-    // Vigilante del Perfil en tiempo real
     const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
     const unsubProfile = onSnapshot(profileRef, (docSnap) => {
       if (docSnap.exists()) setProfile(docSnap.data());
     });
     
-    // Vigilante de las Promociones en tiempo real
     const promoCol = collection(db, 'artifacts', appId, 'users', user.uid, 'promotions');
     const unsubPromos = onSnapshot(promoCol, (snapshot) => {
       setPromotions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
     
-    return () => {
-      unsubProfile();
-      unsubPromos();
-    };
+    return () => { unsubProfile(); unsubPromos(); };
   }, [user]);
 
   if (!profile) return <LoadingScreen />;
@@ -249,23 +223,16 @@ function DashboardLayout({ user }) {
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
-      
-      {/* Menú de PC (Izquierda) */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col hidden lg:flex shrink-0 z-30 shadow-sm">
         <div className="p-8 flex items-center gap-3">
           <div className="bg-black p-2 rounded-xl"><Zap size={20} className="text-[#d1ff64] fill-current" /></div>
           <span className="font-black uppercase tracking-tighter text-xl italic">TopCodes</span>
         </div>
-        
         <nav className="p-4 flex-grow space-y-1 mt-4">
           <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<LayoutDashboard size={18}/>} label="Overview" />
           <NavItem active={activeTab === 'promos'} onClick={() => setActiveTab('promos')} icon={<Link2 size={18}/>} label="Promociones" />
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
-          <div className="pt-8 border-t border-slate-50 mt-8">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-300 cursor-not-allowed"><BarChart3 size={18}/> Premium Data</button>
-          </div>
         </nav>
-
         <div className="p-6 border-t border-slate-100">
           <button onClick={() => signOut(auth)} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-red-500 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
             Salir <LogOut size={16} />
@@ -274,8 +241,6 @@ function DashboardLayout({ user }) {
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        
-        {/* MENÚ MÓVIL */}
         <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200 shadow-sm z-20 relative">
           <div className="flex items-center gap-2">
             <Zap size={24} className="text-black fill-[#d1ff64]" />
@@ -290,24 +255,7 @@ function DashboardLayout({ user }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-            <div>
-              <h1 className="text-3xl font-black tracking-tighter uppercase italic">Panel de Control</h1>
-              <p className="text-slate-400 text-sm font-medium mt-1">Gestiona tu marca personal y proyecta tus ganancias.</p>
-            </div>
-            <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 w-full md:w-auto">
-              <div className="flex-1 md:flex-none">
-                <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Link de tu Spot</p>
-                <p className="text-xs font-bold text-black font-mono truncate max-w-[180px]">{publicLink}</p>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <button onClick={() => window.open(publicLink, '_blank')} className="bg-slate-100 text-black p-3 rounded-2xl hover:bg-slate-200 transition-all"><Eye size={16}/></button>
-                <button onClick={() => { navigator.clipboard.writeText(publicLink); }} className="bg-black text-[#d1ff64] p-3 rounded-2xl hover:scale-105 transition-all shadow-lg"><Copy size={16}/></button>
-              </div>
-            </div>
-          </div>
-
-          {activeTab === 'overview' && <TabOverview profile={profile} promotions={promotions} />}
+          {activeTab === 'overview' && <TabOverview profile={profile} promotions={promotions} spotUrl={publicLink} />}
           {activeTab === 'promos' && <TabPromotions user={user} profile={profile} promotions={promotions} />}
           {activeTab === 'profile' && <TabProfile user={user} profile={profile} />}
         </div>
@@ -322,65 +270,71 @@ const NavItem = ({ active, icon, label, onClick }) => (
   </button>
 );
 
-// --- PESTAÑA: OVERVIEW ---
-function TabOverview({ profile, promotions }) {
-  const profileViews = profile.views || 0;
-  const promoClicks = promotions.reduce((acc, p) => acc + (p.stats?.totalClicks || 0), 0);
-  
-  const proj28Days = Math.floor((promoClicks * 0.03) * 45 * 2.2);
-  const persistenceRate = promoClicks > 5 ? "68%" : "0%";
+// --- PESTAÑA: RESUMEN ---
+function TabOverview({ profile, promotions, spotUrl }) {
+  const [stats, setStats] = useState({ views: 0, clicks: 0, persistence: 0, projection: 0 });
 
-  const dataChart = [
-    { name: 'Día 1', vistas: Math.floor(profileViews * 0.4), clics: Math.floor(promoClicks * 0.4) },
-    { name: 'Día 2', vistas: Math.floor(profileViews * 0.2), clics: Math.floor(promoClicks * 0.25) },
-    { name: 'Día 3', vistas: Math.floor(profileViews * 0.15), clics: Math.floor(promoClicks * 0.15) },
-    { name: 'Día 4', vistas: Math.floor(profileViews * 0.1), clics: Math.floor(promoClicks * 0.08) },
-    { name: 'Día 5+', vistas: Math.floor(profileViews * 0.15), clics: Math.floor(promoClicks * 0.12) },
-  ];
+  useEffect(() => {
+    const totalVistas = profile?.views || 0;
+    // Arreglado el cálculo de clicks que causaba NaN
+    const totalClics = promotions.reduce((acc, curr) => acc + (curr.stats?.totalClicks || 0), 0);
+    const proj = totalClics * 2.8; 
+    setStats({
+      views: totalVistas,
+      clicks: totalClics,
+      persistence: totalVistas > 0 ? Math.floor((totalClics / totalVistas) * 100) : 0,
+      projection: proj.toFixed(0)
+    });
+  }, [profile, promotions]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Vistas Spot" value={profileViews} icon={<Eye className="text-blue-500" size={24}/>} />
-        <StatCard label="Clics Totales" value={promoClicks} icon={<MousePointer2 className="text-purple-500" size={24}/>} />
-        <StatCard label="Persistencia" value={persistenceRate} icon={<Activity className="text-orange-500" size={24}/>} />
-        <StatCard label="Proyección" value={`$${proj28Days}`} icon={<TrendingUp className="text-green-500" size={24}/>} highlight />
+    <div className="animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic mb-2">Panel de Control</h1>
+          <p className="text-slate-500 font-bold">Gestiona tu marca personal y proyecta tus ganancias.</p>
+        </div>
+        <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm">
+          <div className="px-4">
+            <p className="text-[9px] font-black uppercase text-slate-400 mb-1">Link de tu Spot</p>
+            <p className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{spotUrl}</p>
+          </div>
+          <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')}><Eye size={16} className="text-slate-600"/></button>
+          <button className="p-3 bg-black text-[#d1ff64] hover:bg-zinc-800 rounded-xl transition-colors" onClick={() => navigator.clipboard.writeText(spotUrl)}><Copy size={16}/></button>
+        </div>
       </div>
 
-      <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h3 className="text-lg font-black uppercase tracking-tighter italic flex items-center gap-2"><Activity size={20}/> Retención de Tráfico Post-24h</h3>
-            <p className="text-slate-400 text-xs font-bold mt-1">Así es como tu Spot sigue mandando tráfico a las marcas después de que tu historia expira.</p>
-          </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
+          <Eye className="text-[#8b5cf6] mb-3" size={24}/>
+          <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wider">Vistas Spot</p>
+          <p className="text-3xl font-black">{stats.views}</p>
+          <p className="text-[9px] text-slate-400 mt-2 font-bold leading-tight">Visitas totales a tu perfil</p>
         </div>
-        
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dataChart}>
-              <defs><linearGradient id="colorClic" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#d1ff64" stopOpacity={0.3}/><stop offset="95%" stopColor="#d1ff64" stopOpacity={0}/></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} />
-              <Tooltip contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)'}} />
-              <Area type="monotone" dataKey="clics" stroke="#000" strokeWidth={4} fillOpacity={1} fill="url(#colorClic)" />
-              <Area type="monotone" dataKey="vistas" stroke="#cbd5e1" strokeWidth={2} fill="transparent" />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
+          <MousePointer2 className="text-[#a855f7] mb-3" size={24}/>
+          <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wider">Clics Totales</p>
+          <p className="text-3xl font-black">{stats.clicks}</p>
+          <p className="text-[9px] text-slate-400 mt-2 font-bold leading-tight">Veces que usaron tus códigos</p>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
+          <Activity className="text-[#f97316] mb-3" size={24}/>
+          <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wider">Persistencia</p>
+          <p className="text-3xl font-black">{stats.persistence}%</p>
+          <p className="text-[9px] text-slate-400 mt-2 font-bold leading-tight">Tráfico +24hrs después de la Story</p>
+        </div>
+        <div className="bg-[#d1ff64] p-6 rounded-3xl shadow-sm flex flex-col items-center justify-center text-center transform hover:scale-105 transition-transform">
+          <TrendingUp className="text-black mb-3" size={24}/>
+          <p className="text-[10px] font-black uppercase text-black/60 mb-1 tracking-wider">Proyección</p>
+          <p className="text-3xl font-black text-black">${stats.projection}</p>
+          <p className="text-[9px] text-black/60 mt-2 font-bold leading-tight">Ganancia estimada calculada</p>
         </div>
       </div>
     </div>
   );
 }
 
-const StatCard = ({ label, value, icon, highlight }) => (
-  <div className={`p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all hover:scale-[1.02] ${highlight ? 'bg-[#d1ff64]' : 'bg-white'}`}>
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-sm ${highlight ? 'bg-black text-[#d1ff64]' : 'bg-slate-50'}`}>{icon}</div>
-    <p className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-1 ${highlight ? 'text-black/60' : 'text-slate-400'}`}>{label}</p>
-    <p className="text-2xl md:text-3xl font-black tracking-tighter text-black">{value}</p>
-  </div>
-);
-
-// --- PESTAÑA: PROMOS ---
+// --- PESTAÑA: PROMOCIONES ---
 function TabPromotions({ user, profile, promotions }) {
   const [newPromo, setNewPromo] = useState({ 
     brandName: '', 
@@ -396,10 +350,15 @@ function TabPromotions({ user, profile, promotions }) {
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Subir Logo
   const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (file.size > 2097152) {
+      alert("⚠️ La imagen es muy pesada. Por favor sube un logo menor a 2MB.");
+      return;
+    }
+
     setUploadingLogo(true);
     try {
       const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/brands/${Date.now()}_${file.name}`);
@@ -407,7 +366,7 @@ function TabPromotions({ user, profile, promotions }) {
       const url = await getDownloadURL(fileRef);
       setPromoLogoUrl(url);
     } catch (error) {
-      alert("Error al subir el logo.");
+      alert(`❌ Error técnico al subir: ${error.message}`);
     } finally {
       setUploadingLogo(false);
     }
@@ -438,7 +397,6 @@ function TabPromotions({ user, profile, promotions }) {
 
       const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'promotions'), promoData);
       
-      // Guardar también en el Spot público para que se vea la info nueva
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), {
         ownerId: user.uid,
         username: profile.username,
@@ -468,7 +426,6 @@ function TabPromotions({ user, profile, promotions }) {
           <h3 className="text-lg font-black uppercase tracking-tighter italic mb-8 flex items-center gap-3"><Plus size={20}/> Nuevo Link / Cupón</h3>
           <form onSubmit={handleAdd} className="space-y-6">
             
-            {/* Logo y Nicho */}
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
@@ -487,24 +444,17 @@ function TabPromotions({ user, profile, promotions }) {
                 <input type="text" placeholder="Marca (ej. Sephora)" required className="w-1/2 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brandName} onChange={e => setNewPromo({...newPromo, brandName: e.target.value})}/>
                 <select required className="w-1/2 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}>
                   <option value="" disabled>Nicho de la Marca</option>
-                  <option value="Salud y Belleza">Salud y Belleza</option>
-                  <option value="Deportes">Deportes</option>
-                  <option value="Moda y Estilo">Moda y Estilo</option>
-                  <option value="Tecnología">Tecnología</option>
-                  <option value="Foodie">Foodie / Alimentos</option>
-                  <option value="Otro">Otro</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
 
-            {/* Oferta y Links */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input type="text" placeholder="Oferta (20% OFF)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={newPromo.discount} onChange={e => setNewPromo({...newPromo, discount: e.target.value})}/>
               <input type="text" placeholder="Código Cupón (ej. STEF20)" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={newPromo.code} onChange={e => setNewPromo({...newPromo, code: e.target.value})}/>
             </div>
             <input type="url" placeholder="Link de Afiliado Directo" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={newPromo.originalUrl} onChange={e => setNewPromo({...newPromo, originalUrl: e.target.value})}/>
             
-            {/* Comisión */}
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
                <label className="text-[10px] font-black uppercase text-slate-400 mb-3 block">Comisión acordada por venta</label>
                <div className="flex gap-4">
@@ -532,8 +482,8 @@ function TabPromotions({ user, profile, promotions }) {
                   {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover"/> : (promo.brandName ? promo.brandName.charAt(0).toUpperCase() : '?')}
                  </div>
                  <div>
-                    <h4 className="font-black text-sm">{promo.brandName}</h4>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{promo.discount}</p>
+                    <h4 className="font-black text-sm leading-none">{promo.brandName}</h4>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1">{promo.discount}</p>
                     <p className="mt-1 text-[9px] font-black text-[#8b5cf6]">Ganas: {promo.commissionValue}{promo.commissionType}</p>
                  </div>
               </div>
@@ -579,7 +529,7 @@ function TabPromotions({ user, profile, promotions }) {
     </div>
   );
 }
-// --- PESTAÑA: PERFIL ---
+
 // --- PESTAÑA: PERFIL ---
 function TabProfile({ user, profile }) {
   const [formData, setFormData] = useState({ 
@@ -602,40 +552,31 @@ function TabProfile({ user, profile }) {
     });
   }, [profile]);
 
- // Subir Logo con Validación de Tamaño
- const handleLogoUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  // Validación: Si pesa más de 2MB (2 * 1024 * 1024 bytes), rebótalo.
-  if (file.size > 2097152) {
-    alert("⚠️ La imagen es muy pesada. Por favor sube un logo menor a 2MB.");
-    return;
-  }
-
-  setUploadingLogo(true);
-  try {
-    const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/brands/${Date.now()}_${file.name}`);
-    await uploadBytes(fileRef, file);
-    const url = await getDownloadURL(fileRef);
-    setPromoLogoUrl(url);
-  } catch (error) {
-    console.error(error);
-    alert(`❌ Error técnico: ${error.message}`);
-  } finally {
-    setUploadingLogo(false);
-  }
-};
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), formData);
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), formData);
+      setMsg('✅ Perfil actualizado correctamente.');
+      setTimeout(() => setMsg(''), 4000);
+    } catch (error) {
+      setMsg(`❌ Error al guardar: ${error.message}`);
+    }
+  };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (file.size > 2097152) {
+      alert("⚠️ La imagen es muy pesada. Por favor sube una foto menor a 2MB.");
+      return;
+    }
+
     setUploading(true);
-    setMsg(''); // Limpia mensajes viejos
+    setMsg('');
     
     try {
-      // Le agregamos "Date.now()" para evitar que los celulares guarden en caché la foto vieja
       const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/profilePic_${Date.now()}`);
       await uploadBytes(fileRef, file);
       const url = await getDownloadURL(fileRef);
@@ -647,10 +588,8 @@ function TabProfile({ user, profile }) {
       setMsg('📸 ¡Foto subida y guardada con éxito!');
       setTimeout(() => setMsg(''), 4000);
     } catch (error) {
-      setMsg(`❌ ERROR FIREBASE: ${error.code || error.message}`);
-      console.error(error);
+      setMsg(`❌ ERROR: ${error.message}`);
     } finally {
-      // ESTA ES LA MAGIA: Pase lo que pase, destraba el botón
       setUploading(false); 
     }
   };
@@ -658,9 +597,7 @@ function TabProfile({ user, profile }) {
   return (
     <div className="max-w-2xl bg-white p-8 md:p-12 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in duration-700">
       <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 flex items-center gap-3"><Settings size={24}/> Ajustes de Perfil</h2>
-      
       <form onSubmit={handleSave} className="space-y-8">
-        
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
           <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Identidad Base (TopCodes & IG)</p>
           <p className="text-lg font-black text-black italic">@{profile.username}</p>
@@ -677,7 +614,7 @@ function TabProfile({ user, profile }) {
                 {uploading ? 'Subiendo...' : 'Subir Foto'}
                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
               </label>
-              <p className="text-[10px] font-bold text-slate-400 mt-4 leading-relaxed max-w-sm">Te recomendamos subir la <strong className="text-black">misma foto de tu Instagram</strong> para que tus seguidores reconozcan tu Spot al instante.</p>
+              <p className="text-[10px] font-bold text-slate-400 mt-4 leading-relaxed max-w-sm">Te recomendamos subir la <strong className="text-black">misma foto de tu Instagram</strong>.</p>
             </div>
           </div>
         </div>
@@ -703,12 +640,10 @@ function TabProfile({ user, profile }) {
           </div>
         </div>
 
-        {/* --- EL MENSAJE AHORA APARECE AQUÍ ABAJO --- */}
         <div className="pt-4">
           <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all">Guardar Cambios</button>
           {msg && <div className="mt-4 bg-green-50 border border-green-200 text-green-700 p-4 rounded-2xl text-xs font-bold text-center animate-in slide-in-from-top-2">{msg}</div>}
         </div>
-
       </form>
     </div>
   );
@@ -891,24 +826,10 @@ function PublicSpot() {
           <p className="text-sm md:text-base font-bold text-slate-400 mt-4 max-w-lg mx-auto italic">{publicProfile.bio}</p>
           
           <div className="flex justify-center gap-3 mt-6">
-            <a href={`https://instagram.com/${publicProfile.username}`} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-pink-600">
-              <Instagram size={20} />
-            </a>
-            {publicProfile.tiktokUrl && (
-              <a href={publicProfile.tiktokUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-black">
-                <Music size={20} />
-              </a>
-            )}
-            {publicProfile.youtubeUrl && (
-              <a href={publicProfile.youtubeUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-red-600">
-                <Youtube size={20} />
-              </a>
-            )}
-            {publicProfile.xUrl && (
-              <a href={publicProfile.xUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-slate-800">
-                <Twitter size={20} />
-              </a>
-            )}
+            <a href={`https://instagram.com/${publicProfile.username}`} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-pink-600"><Instagram size={20} /></a>
+            {publicProfile.tiktokUrl && <a href={publicProfile.tiktokUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-black"><Music size={20} /></a>}
+            {publicProfile.youtubeUrl && <a href={publicProfile.youtubeUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-red-600"><Youtube size={20} /></a>}
+            {publicProfile.xUrl && <a href={publicProfile.xUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-slate-800"><Twitter size={20} /></a>}
           </div>
         </header>
 
@@ -918,11 +839,13 @@ function PublicSpot() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {promotions.filter(p=>p.brandName.toLowerCase().includes(searchTerm.toLowerCase())).map(promo => (
+          {promotions.filter(p=>(p.brandName || '').toLowerCase().includes(searchTerm.toLowerCase())).map(promo => (
             <button key={promo.id} onClick={()=>handleClick(promo)} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-64 text-left hover:border-black hover:shadow-xl transition-all group overflow-hidden relative">
               <div className="absolute -top-4 -right-4 opacity-[0.02] text-black group-hover:opacity-[0.05] transition-opacity"><Zap size={120} /></div>
               <div className="flex justify-between items-start relative z-10 w-full">
-                <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center font-black text-white text-lg shadow-lg">{promo.brandName[0].toUpperCase()}</div>
+                <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center font-black text-[#d1ff64] text-lg shadow-lg overflow-hidden border border-slate-800">
+                  {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover"/> : (promo.brandName ? promo.brandName[0].toUpperCase() : '?')}
+                </div>
                 <div className="bg-slate-50 p-3 rounded-2xl text-slate-400 group-hover:bg-[#d1ff64] group-hover:text-black transition-colors"><ExternalLink size={16} /></div>
               </div>
               <div className="relative z-10">
