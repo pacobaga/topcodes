@@ -380,15 +380,15 @@ const StatCard = ({ label, value, icon, highlight }) => (
   </div>
 );
 
-// --- PESTAÑA: PROMOCIONES ---
+// --- PESTAÑA: PROMOS ---
 function TabPromotions({ user, profile, promotions }) {
   const [newPromo, setNewPromo] = useState({ 
-    brand: '', 
-    niche: '', 
+    brandName: '', 
     discount: '', 
     code: '', 
-    url: '',
-    commissionType: '%', // Puede ser '%', '$' o 'puntos'
+    originalUrl: '',
+    niche: '',
+    commissionType: '%',
     commissionValue: ''
   });
   const [promoLogoUrl, setPromoLogoUrl] = useState('');
@@ -396,7 +396,7 @@ function TabPromotions({ user, profile, promotions }) {
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Función para subir el logo de la marca a Firebase Storage
+  // Subir Logo
   const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -407,37 +407,45 @@ function TabPromotions({ user, profile, promotions }) {
       const url = await getDownloadURL(fileRef);
       setPromoLogoUrl(url);
     } catch (error) {
-      console.error(error);
-      alert("Error al subir el logo. Revisa tu conexión.");
+      alert("Error al subir el logo.");
     } finally {
       setUploadingLogo(false);
     }
   };
 
-  const handleAddPromo = async (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     setLoading(true);
+    let trackedUrl = newPromo.originalUrl;
+    try {
+      const urlObj = new URL(newPromo.originalUrl);
+      urlObj.searchParams.set('utm_source', 'topcodes');
+      urlObj.searchParams.set('subid', profile.username);
+      trackedUrl = urlObj.toString();
+    } catch (e) { 
+      setLoading(false);
+      return alert("Ingresa una URL válida que empiece con http:// o https://"); 
+    }
+
     try {
       const promoData = {
         ...newPromo,
+        trackedUrl,
         logoUrl: promoLogoUrl,
-        clicks: 0,
-        createdAt: new Date().toISOString(),
-        isActive: true
+        stats: { totalClicks: 0 },
+        createdAt: new Date().toISOString()
       };
+
+      const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'promotions'), promoData);
       
-      const promoCol = collection(db, 'artifacts', appId, 'users', user.uid, 'promotions');
-      const docRef = await addDoc(promoCol, promoData);
-      
-      // Guardar también en el Spot público
+      // Guardar también en el Spot público para que se vea la info nueva
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), {
         ownerId: user.uid,
         username: profile.username,
         ...promoData
       });
 
-      // Limpiar formulario
-      setNewPromo({ brand: '', niche: '', discount: '', code: '', url: '', commissionType: '%', commissionValue: '' });
+      setNewPromo({ brandName: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '' });
       setPromoLogoUrl('');
       setMsg('✅ ¡Deal publicado con éxito!');
       setTimeout(() => setMsg(''), 4000);
@@ -447,22 +455,20 @@ function TabPromotions({ user, profile, promotions }) {
     setLoading(false);
   };
 
-  const handleDeletePromo = async (promoId) => {
+  const handleDelete = async (promoId) => {
     if(!window.confirm('¿Seguro que quieres eliminar esta promoción?')) return;
     await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', promoId));
     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', promoId));
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-12 animate-in fade-in duration-700">
-      <div className="flex-1">
-        <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 flex items-center gap-3"><LinkIcon size={24}/> Enlaces y Códigos</h2>
-        
-        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 mb-12">
-          <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2"><Plus size={16}/> Nuevo Deal</h3>
-          
-          <form onSubmit={handleAddPromo} className="space-y-4">
-            {/* SECCIÓN 1: Marca y Logo */}
+    <div className="flex flex-col xl:flex-row gap-12 animate-in fade-in duration-700">
+      <div className="flex-1 space-y-10">
+        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
+          <h3 className="text-lg font-black uppercase tracking-tighter italic mb-8 flex items-center gap-3"><Plus size={20}/> Nuevo Link / Cupón</h3>
+          <form onSubmit={handleAdd} className="space-y-6">
+            
+            {/* Logo y Nicho */}
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
@@ -473,13 +479,13 @@ function TabPromotions({ user, profile, promotions }) {
                     {uploadingLogo ? 'Subiendo...' : 'Subir Logo Marca'}
                     <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
                   </label>
-                  <p className="text-[9px] font-bold text-slate-400 mt-2">Atrae más clics usando el logo oficial.</p>
+                  <p className="text-[9px] font-bold text-slate-400 mt-2">Sube el logo oficial (Opcional).</p>
                 </div>
               </div>
               
               <div className="flex gap-4">
-                <input type="text" placeholder="Nombre Marca (ej. Sephora)" required className="w-1/2 bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brand} onChange={e=>setNewPromo({...newPromo, brand: e.target.value})}/>
-                <select required className="w-1/2 bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}>
+                <input type="text" placeholder="Marca (ej. Sephora)" required className="w-1/2 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brandName} onChange={e => setNewPromo({...newPromo, brandName: e.target.value})}/>
+                <select required className="w-1/2 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}>
                   <option value="" disabled>Nicho de la Marca</option>
                   <option value="Salud y Belleza">Salud y Belleza</option>
                   <option value="Deportes">Deportes</option>
@@ -491,113 +497,88 @@ function TabPromotions({ user, profile, promotions }) {
               </div>
             </div>
 
-            {/* SECCIÓN 2: Oferta y Acuerdo Comercial */}
-            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-              <div className="flex gap-4">
-                <input type="text" placeholder="Oferta (ej. 20% OFF)" required className="w-1/2 bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.discount} onChange={e=>setNewPromo({...newPromo, discount: e.target.value})}/>
-                <input type="text" placeholder="Código (ej. PACO20)" required className="w-1/2 bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.code} onChange={e=>setNewPromo({...newPromo, code: e.target.value})}/>
-              </div>
-              <input type="url" placeholder="Link de Afiliado Directo (https://...)" required className="w-full bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.url} onChange={e=>setNewPromo({...newPromo, url: e.target.value})}/>
-              
-              {/* Nuevo: Acuerdo de Comisión */}
-              <div className="pt-4 border-t border-slate-200">
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Acuerdo de Comisión (Tu Ganancia por venta)</label>
-                <div className="flex gap-4">
-                  <select className="w-1/3 bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.commissionType} onChange={e=>setNewPromo({...newPromo, commissionType: e.target.value})}>
+            {/* Oferta y Links */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input type="text" placeholder="Oferta (20% OFF)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={newPromo.discount} onChange={e => setNewPromo({...newPromo, discount: e.target.value})}/>
+              <input type="text" placeholder="Código Cupón (ej. STEF20)" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={newPromo.code} onChange={e => setNewPromo({...newPromo, code: e.target.value})}/>
+            </div>
+            <input type="url" placeholder="Link de Afiliado Directo" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={newPromo.originalUrl} onChange={e => setNewPromo({...newPromo, originalUrl: e.target.value})}/>
+            
+            {/* Comisión */}
+            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+               <label className="text-[10px] font-black uppercase text-slate-400 mb-3 block">Comisión acordada por venta</label>
+               <div className="flex gap-4">
+                  <select className="w-1/3 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.commissionType} onChange={e=>setNewPromo({...newPromo, commissionType: e.target.value})}>
                     <option value="%">Porcentaje (%)</option>
-                    <option value="$">Fijo ($)</option>
+                    <option value="$">Monto Fijo ($)</option>
                     <option value="puntos">Puntos</option>
                   </select>
-                  <input type="number" placeholder="Valor (ej. 15)" required className="w-2/3 bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.commissionValue} onChange={e=>setNewPromo({...newPromo, commissionValue: e.target.value})}/>
-                </div>
-              </div>
+                  <input type="number" placeholder="Valor (ej. 15)" required className="w-2/3 bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.commissionValue} onChange={e=>setNewPromo({...newPromo, commissionValue: e.target.value})}/>
+               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50">
+            <button type="submit" disabled={loading} className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest hover:brightness-110 shadow-xl transition-all disabled:opacity-50">
               {loading ? 'Guardando...' : 'Publicar Deal'}
             </button>
             {msg && <div className="text-center text-xs font-bold text-green-600 mt-2">{msg}</div>}
           </form>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2"><Activity size={16}/> Deals Activos</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promotions.map(promo => (
-            <div key={promo.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-black text-sm shrink-0 overflow-hidden border border-slate-200">
-                  {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover"/> : promo.brand.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-black text-sm leading-tight flex items-center gap-2">{promo.brand} <span className="bg-slate-100 text-slate-400 text-[8px] px-2 py-1 rounded-md uppercase tracking-widest">{promo.niche}</span></p>
-                  <p className="text-xs font-bold text-slate-500">{promo.discount} • Código: <span className="text-black bg-[#d1ff64]/20 px-1 rounded">{promo.code}</span></p>
-                  <p className="text-[9px] font-bold text-[#8b5cf6] mt-1">Ganas: {promo.commissionValue}{promo.commissionType === 'puntos' ? ' Puntos' : promo.commissionType}</p>
-                </div>
+            <div key={promo.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-black text-xs shrink-0 overflow-hidden border border-slate-200">
+                  {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover"/> : (promo.brandName ? promo.brandName.charAt(0).toUpperCase() : '?')}
+                 </div>
+                 <div>
+                    <h4 className="font-black text-sm">{promo.brandName}</h4>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{promo.discount}</p>
+                    <p className="mt-1 text-[9px] font-black text-[#8b5cf6]">Ganas: {promo.commissionValue}{promo.commissionType}</p>
+                 </div>
               </div>
-              <div className="text-right flex items-center gap-4">
-                <div>
-                  <p className="text-xl font-black">{promo.clicks || 0}</p>
-                  <p className="text-[8px] font-black uppercase text-slate-400">Clics</p>
+              <div className="flex items-center gap-3">
+                <div className="text-center">
+                   <p className="text-lg font-black leading-none">{promo.stats?.totalClicks || 0}</p>
+                   <p className="text-[8px] font-black text-slate-300 uppercase">Clics</p>
                 </div>
-                <button onClick={() => handleDeletePromo(promo.id)} className="p-3 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl transition-colors"><Trash2 size={16}/></button>
+                <button onClick={() => handleDelete(promo.id)} className="p-3 text-slate-300 hover:text-red-500 bg-slate-50 rounded-xl transition-colors"><Trash2 size={18}/></button>
               </div>
             </div>
           ))}
-          {promotions.length === 0 && <p className="text-sm font-bold text-slate-400 text-center py-8">No tienes deals activos.</p>}
         </div>
       </div>
 
-      {/* Simulador Móvil (Vista Previa) */}
-      <div className="hidden lg:block w-[320px] shrink-0">
-        <div className="sticky top-12 border-[8px] border-slate-900 rounded-[3rem] h-[650px] bg-slate-50 overflow-hidden shadow-2xl relative">
-          <div className="absolute top-0 w-full h-6 bg-slate-900 rounded-b-3xl z-10"></div>
-          
-          <div className="p-6 pt-12 flex flex-col items-center text-center">
-            <div className="w-20 h-20 bg-white rounded-full mb-4 border-2 border-slate-200 overflow-hidden shadow-sm">
-               {profile.photoUrl ? <img src={profile.photoUrl} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-200"></div>}
+      <div className="hidden xl:flex flex-col items-center w-[380px] shrink-0 sticky top-10 h-[750px]">
+        <div className="w-[320px] h-[650px] bg-white rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden relative">
+          <div className="absolute top-0 w-full h-8 bg-slate-900 rounded-b-3xl flex justify-center items-center"><div className="w-16 h-4 bg-black rounded-b-2xl"></div></div>
+          <div className="h-full w-full overflow-y-auto pt-14 pb-8 px-6 bg-[#fdfdfd] text-center">
+            <div className="w-20 h-20 bg-slate-100 rounded-[2rem] mx-auto mb-4 border border-slate-200 overflow-hidden flex items-center justify-center">
+               {profile.photoUrl ? <img src={profile.photoUrl} className="w-full h-full object-cover" /> : <User size={30} className="text-slate-300" />}
             </div>
-            <h2 className="text-xl font-black tracking-tighter italic">@{profile.username}</h2>
-            <p className="text-[10px] font-bold text-slate-500 mt-1 max-w-[200px]">{profile.bio}</p>
-          </div>
-
-          <div className="px-4 space-y-3 h-[400px] overflow-y-auto pb-10">
-            {/* Promo Nueva en vivo */}
-            {newPromo.brand && (
-              <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between opacity-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-[#d1ff64] font-black text-xs shrink-0 overflow-hidden">
-                    {promoLogoUrl ? <img src={promoLogoUrl} className="w-full h-full object-cover"/> : newPromo.brand.charAt(0).toUpperCase()}
+            <h3 className="text-xl font-black italic">@{profile.username}</h3>
+            <p className="text-[10px] font-bold text-slate-400 mt-2 px-4 leading-relaxed">{profile.bio}</p>
+            <div className="mt-8 space-y-3">
+              {promotions.map(p => (
+                <div key={p.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 text-left relative overflow-hidden flex items-center gap-3">
+                  <div className="w-10 h-10 bg-black rounded-xl text-[#d1ff64] flex items-center justify-center font-black text-[12px] overflow-hidden shrink-0">
+                    {p.logoUrl ? <img src={p.logoUrl} className="w-full h-full object-cover"/> : (p.brandName ? p.brandName[0].toUpperCase() : '?')}
                   </div>
-                  <div className="text-left">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{newPromo.brand}</p>
-                    <p className="text-xs font-black leading-none">{newPromo.discount}</p>
+                  <div className="flex-1">
+                    <h4 className="text-[9px] font-black uppercase text-slate-300 tracking-widest leading-none mb-1">{p.brandName}</h4>
+                    <p className="text-sm font-black italic leading-none">{p.discount}</p>
                   </div>
+                  <ExternalLink size={14} className="text-slate-200" />
                 </div>
-                <ExternalLink size={14} className="text-slate-300"/>
-              </div>
-            )}
-            {/* Lista Real */}
-            {promotions.map(promo => (
-              <div key={promo.id} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between hover:scale-[1.02] transition-transform">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-[#d1ff64] font-black text-xs shrink-0 overflow-hidden">
-                    {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover"/> : promo.brand.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{promo.brand}</p>
-                    <p className="text-xs font-black leading-none">{promo.discount}</p>
-                  </div>
-                </div>
-                <ExternalLink size={14} className="text-slate-300"/>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
+        <p className="mt-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] italic flex items-center gap-2"><Smartphone size={12}/> Live Preview</p>
       </div>
     </div>
   );
 }
-
 // --- PESTAÑA: PERFIL ---
 // --- PESTAÑA: PERFIL ---
 function TabProfile({ user, profile }) {
