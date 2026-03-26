@@ -14,7 +14,7 @@ import {
   Copy, Plus, Trash2, LogOut, User, Zap, ExternalLink, Link2, Search, 
   Instagram, Eye, LayoutDashboard, Settings, Users, Activity, ImageIcon, 
   Lock, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
-  Youtube, Twitter, Music
+  Youtube, Twitter, Music, Mail
 } from 'lucide-react';
 
 // IMPORTANTE: Aquí van las gráficas de barras
@@ -220,6 +220,9 @@ function DashboardLayout({ user }) {
   if (!profile) return <LoadingScreen />;
 
   const publicLink = `${window.location.origin}/${profile.username}`;
+  
+  // AQUÍ PONES EL CORREO DONDE QUIERES RECIBIR LA AYUDA
+  const supportEmail = "contacto@topcodes.lat"; 
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
@@ -233,9 +236,14 @@ function DashboardLayout({ user }) {
           <NavItem active={activeTab === 'promos'} onClick={() => setActiveTab('promos')} icon={<Link2 size={18}/>} label="Promociones" />
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
         </nav>
-        <div className="p-6 border-t border-slate-100">
+        
+        {/* SECCIÓN DE ABAJO: SOPORTE Y SALIR */}
+        <div className="p-6 border-t border-slate-100 space-y-2">
+          <a href={`mailto:${supportEmail}?subject=Ayuda con mi Spot TopCodes (@${profile.username})`} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
+            <Mail size={16} /> Soporte
+          </a>
           <button onClick={() => signOut(auth)} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-red-500 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
-            Salir <LogOut size={16} />
+            <LogOut size={16} /> Salir 
           </button>
         </div>
       </aside>
@@ -250,7 +258,11 @@ function DashboardLayout({ user }) {
             <button onClick={() => setActiveTab('overview')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><LayoutDashboard size={18}/></button>
             <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
             <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
-            <button onClick={() => signOut(auth)} className="p-2.5 text-red-500 ml-1 hover:bg-red-50 rounded-xl"><LogOut size={18}/></button>
+            
+            <div className="w-px h-6 bg-slate-200 mx-1"></div> {/* Separador */}
+            
+            <a href={`mailto:${supportEmail}?subject=Ayuda con mi Spot TopCodes (@${profile.username})`} className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors" title="Contactar Soporte"><Mail size={18}/></a>
+            <button onClick={() => signOut(auth)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors"><LogOut size={18}/></button>
           </div>
         </div>
 
