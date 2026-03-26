@@ -349,19 +349,21 @@ function TabPromotions({ user, profile, promotions }) {
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // LA MAGIA BLINDADA: Limpia https, http, www, mayúsculas y diagonales
+  // LA MAGIA BLINDADA (Y ANTI-ADBLOCKERS)
   const getCleanDomain = (domain) => {
     if (!domain) return '';
     return domain.toLowerCase()
                  .replace(/^https?:\/\//, '') // Quita http:// o https://
                  .replace(/^www\./, '')       // Quita el www.
-                 .split('/')[0]               // Quita todo lo que haya después del .com (ej. /productos)
+                 .split('/')[0]               // Quita todo después del .com
                  .trim();
   };
   
   const cleanDomain = getCleanDomain(newPromo.brandDomain);
   const isValidDomain = cleanDomain.includes('.');
-  const previewLogoUrl = isValidDomain ? `https://logo.clearbit.com/${cleanDomain}` : '';
+  
+  // NUEVO MOTOR: Usamos la API pública de Google que nunca es bloqueada
+  const previewLogoUrl = isValidDomain ? `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=256` : '';
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -419,9 +421,9 @@ function TabPromotions({ user, profile, promotions }) {
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden relative">
-                  {/* EL TRUCO ESTÁ AQUÍ EN EL ATRIBUTO "key" */}
+                  {/* Imagen procesada por Google */}
                   {previewLogoUrl ? (
-                    <img key={previewLogoUrl} src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'} />
+                    <img key={previewLogoUrl} src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10 p-2" />
                   ) : null}
                   <span className="absolute inset-0 flex items-center justify-center font-black text-slate-300 text-xl">
                     {newPromo.brandName ? newPromo.brandName.charAt(0).toUpperCase() : <ImageIcon size={24}/>}
@@ -487,7 +489,7 @@ function TabPromotions({ user, profile, promotions }) {
               <div className="flex items-center gap-3">
                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black text-sm shrink-0 overflow-hidden border border-slate-200 relative">
                   {promo.logoUrl ? (
-                    <img key={promo.logoUrl} src={promo.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
+                    <img key={promo.logoUrl} src={promo.logoUrl} className="w-full h-full object-cover bg-white relative z-10 p-2"/>
                   ) : null}
                   <span className="absolute inset-0 flex items-center justify-center">{promo.brandName ? promo.brandName.charAt(0).toUpperCase() : '?'}</span>
                  </div>
@@ -523,7 +525,7 @@ function TabPromotions({ user, profile, promotions }) {
                 <div key={p.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 text-left relative overflow-hidden flex items-center gap-3">
                   <div className="w-10 h-10 bg-black rounded-xl text-[#d1ff64] flex items-center justify-center font-black text-[12px] overflow-hidden shrink-0 relative">
                     {p.logoUrl ? (
-                      <img key={p.logoUrl} src={p.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
+                      <img key={p.logoUrl} src={p.logoUrl} className="w-full h-full object-cover bg-white relative z-10 p-1"/>
                     ) : null}
                     <span className="absolute inset-0 flex items-center justify-center">{p.brandName ? p.brandName[0].toUpperCase() : '?'}</span>
                   </div>
