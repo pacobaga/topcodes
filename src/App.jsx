@@ -346,7 +346,7 @@ function TabPromotions({ user, profile, promotions }) {
     commissionType: '%',
     commissionValue: ''
   });
-  const [editingId, setEditingId] = useState(null); // NUEVO: Saber si estamos editando
+  const [editingId, setEditingId] = useState(null); 
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -393,9 +393,16 @@ function TabPromotions({ user, profile, promotions }) {
       };
 
       if (editingId) {
-        // ACTUALIZAR DEAL EXISTENTE
+        // ACTUALIZAR DEAL EXISTENTE (Con parche para promos viejas)
         await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', editingId), promoData);
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', editingId), promoData);
+        
+        // Usamos setDoc con merge: true para que si el clon público no existía, lo cree en lugar de crashear
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', editingId), {
+          ownerId: user.uid,
+          username: profile.username,
+          ...promoData
+        }, { merge: true });
+        
         setMsg('✅ ¡Deal actualizado con éxito!');
       } else {
         // CREAR NUEVO DEAL
@@ -561,7 +568,7 @@ function TabPromotions({ user, profile, promotions }) {
         </div>
       </div>
 
-      {/* SIMULADOR MÓVIL (Se mantiene igual) */}
+      {/* SIMULADOR MÓVIL */}
       <div className="hidden xl:flex flex-col items-center w-[380px] shrink-0 sticky top-10 h-[750px]">
         <div className="w-[320px] h-[650px] bg-white rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden relative">
           <div className="absolute top-0 w-full h-8 bg-slate-900 rounded-b-3xl flex justify-center items-center z-20"><div className="w-16 h-4 bg-black rounded-b-2xl"></div></div>
