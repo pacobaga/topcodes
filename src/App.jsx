@@ -85,10 +85,11 @@ function LandingPage() {
   const [cities, setCities] = useState('');
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    setError(''); setMsg('');
+    setError(''); setMsg(''); setLoading(true);
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
@@ -109,6 +110,7 @@ function LandingPage() {
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', cleanUser), { uid, ...profileData });
       }
     } catch (err) { setError(err.message); }
+    setLoading(false);
   };
 
   const handleResetPassword = async () => {
@@ -144,7 +146,7 @@ function LandingPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
           
-          {/* Título y logo móvil (Solo visible en celular para dar contexto) */}
+          {/* Título y logo móvil */}
           <div className="lg:hidden text-center mb-8">
             <Zap size={48} className="text-black fill-[#d1ff64] mx-auto mb-4" />
             <h1 className="text-4xl font-black uppercase tracking-tighter italic">TopCodes</h1>
@@ -162,22 +164,42 @@ function LandingPage() {
 
             <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
-                <>
-                  <input type="text" placeholder="Usuario de Instagram (@...)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
-                  <div className="grid grid-cols-2 gap-3">
-                    <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={category} onChange={e=>setCategory(e.target.value)}>
-                      <option value="">Nicho</option>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <input type="text" placeholder="Ciudades" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={cities} onChange={e=>setCities(e.target.value)}/>
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                  <input type="text" placeholder="Usuario de Instagram (@...)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
+                  
+                  <div className="flex gap-4">
+                    <div className="w-1/2">
+                      <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={category} onChange={e=>setCategory(e.target.value)}>
+                        <option value="" disabled>Nicho</option>
+                        <option value="Salud y Belleza">Salud y Belleza</option>
+                        <option value="Deportes">Deportes</option>
+                        <option value="Moda y Estilo">Moda y Estilo</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Lifestyle">Lifestyle</option>
+                        <option value="Viajes">Viajes</option>
+                        <option value="Fitness">Fitness</option>
+                        <option value="Gaming">Gaming</option>
+                        <option value="Comedia">Comedia</option>
+                        <option value="Educación">Educación</option>
+                        <option value="Finanzas">Finanzas / Negocios</option>
+                        <option value="Foodie">Foodie / Gastronomía</option>
+                        <option value="Arte">Arte y Diseño</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                      <p className="text-[9px] text-slate-400 mt-2 font-bold pl-2">Categoría principal.</p>
+                    </div>
+                    <div className="w-1/2">
+                      <input type="text" placeholder="Ciudades (ej. CDMX)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={cities} onChange={e=>setCities(e.target.value)}/>
+                      <p className="text-[9px] text-slate-400 mt-2 font-bold pl-2">Separa con comas (,).</p>
+                    </div>
                   </div>
-                </>
+                </div>
               )}
-              <input type="email" placeholder="Correo Electrónico" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={email} onChange={e=>setEmail(e.target.value)}/>
-              <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={password} onChange={e=>setPassword(e.target.value)}/>
+              <input type="email" placeholder="Correo Electrónico" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={email} onChange={e=>setEmail(e.target.value)}/>
+              <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={password} onChange={e=>setPassword(e.target.value)}/>
               
-              <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl mt-4">
-                {isLogin ? 'Acceder ahora' : 'Crear mi Spot'}
+              <button type="submit" disabled={loading} className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl mt-4 disabled:opacity-50">
+                {loading ? 'Cargando...' : (isLogin ? 'Acceder ahora' : 'Crear mi Spot')}
               </button>
             </form>
 
