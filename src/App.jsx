@@ -338,7 +338,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
 function TabPromotions({ user, profile, promotions }) {
   const [newPromo, setNewPromo] = useState({ 
     brandName: '', 
-    brandDomain: '', // <-- NUEVO: Para la magia del logo
+    brandDomain: '', 
     discount: '', 
     code: '', 
     originalUrl: '',
@@ -349,9 +349,19 @@ function TabPromotions({ user, profile, promotions }) {
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // LA MAGIA: Limpia la URL que escribe el usuario y trae el logo de Clearbit
-  const getCleanDomain = (domain) => domain.replace(/^https?:\/\//, '').split('/')[0].trim();
-  const previewLogoUrl = newPromo.brandDomain ? `https://logo.clearbit.com/${getCleanDomain(newPromo.brandDomain)}` : '';
+  // LA MAGIA BLINDADA: Limpia https, http, www, mayúsculas y diagonales
+  const getCleanDomain = (domain) => {
+    if (!domain) return '';
+    return domain.toLowerCase()
+                 .replace(/^https?:\/\//, '') // Quita http:// o https://
+                 .replace(/^www\./, '')       // Quita el www.
+                 .split('/')[0]               // Quita todo lo que haya después del .com (ej. /productos)
+                 .trim();
+  };
+  
+  const cleanDomain = getCleanDomain(newPromo.brandDomain);
+  const isValidDomain = cleanDomain.includes('.');
+  const previewLogoUrl = isValidDomain ? `https://logo.clearbit.com/${cleanDomain}` : '';
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -371,7 +381,7 @@ function TabPromotions({ user, profile, promotions }) {
       const promoData = {
         ...newPromo,
         trackedUrl,
-        logoUrl: previewLogoUrl, // Guarda el link del logo mágico
+        logoUrl: previewLogoUrl,
         stats: { totalClicks: 0 },
         createdAt: new Date().toISOString()
       };
@@ -384,7 +394,6 @@ function TabPromotions({ user, profile, promotions }) {
         ...promoData
       });
 
-      // Limpia el formulario
       setNewPromo({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '' });
       setMsg('✅ ¡Deal publicado con éxito!');
       setTimeout(() => setMsg(''), 4000);
@@ -407,13 +416,12 @@ function TabPromotions({ user, profile, promotions }) {
           <h3 className="text-lg font-black uppercase tracking-tighter italic mb-8 flex items-center gap-3"><Plus size={20}/> Nuevo Link / Cupón</h3>
           <form onSubmit={handleAdd} className="space-y-6">
             
-            {/* SECCIÓN: Marca y Logo Mágico */}
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden relative">
-                  {/* Si hay logo, lo muestra. Si el link falla, lo oculta y muestra la inicial */}
+                  {/* EL TRUCO ESTÁ AQUÍ EN EL ATRIBUTO "key" */}
                   {previewLogoUrl ? (
-                    <img src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'} />
+                    <img key={previewLogoUrl} src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'} />
                   ) : null}
                   <span className="absolute inset-0 flex items-center justify-center font-black text-slate-300 text-xl">
                     {newPromo.brandName ? newPromo.brandName.charAt(0).toUpperCase() : <ImageIcon size={24}/>}
@@ -421,7 +429,7 @@ function TabPromotions({ user, profile, promotions }) {
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-black uppercase tracking-widest text-black mb-1">Logo Inteligente</p>
-                  <p className="text-[10px] font-bold text-slate-400">Escribe el sitio web de la marca y nosotros buscamos su logo oficial automáticamente.</p>
+                  <p className="text-[10px] font-bold text-slate-400">Escribe o pega el sitio web de la marca y nosotros buscamos su logo oficial.</p>
                 </div>
               </div>
               
@@ -473,14 +481,13 @@ function TabPromotions({ user, profile, promotions }) {
           </form>
         </div>
 
-        {/* LISTA DE DEALS ACTIVOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promotions.map(promo => (
             <div key={promo.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-black transition-colors">
               <div className="flex items-center gap-3">
                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black text-sm shrink-0 overflow-hidden border border-slate-200 relative">
                   {promo.logoUrl ? (
-                    <img src={promo.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
+                    <img key={promo.logoUrl} src={promo.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
                   ) : null}
                   <span className="absolute inset-0 flex items-center justify-center">{promo.brandName ? promo.brandName.charAt(0).toUpperCase() : '?'}</span>
                  </div>
@@ -502,7 +509,6 @@ function TabPromotions({ user, profile, promotions }) {
         </div>
       </div>
 
-      {/* SIMULADOR MÓVIL */}
       <div className="hidden xl:flex flex-col items-center w-[380px] shrink-0 sticky top-10 h-[750px]">
         <div className="w-[320px] h-[650px] bg-white rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden relative">
           <div className="absolute top-0 w-full h-8 bg-slate-900 rounded-b-3xl flex justify-center items-center z-20"><div className="w-16 h-4 bg-black rounded-b-2xl"></div></div>
@@ -517,7 +523,7 @@ function TabPromotions({ user, profile, promotions }) {
                 <div key={p.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 text-left relative overflow-hidden flex items-center gap-3">
                   <div className="w-10 h-10 bg-black rounded-xl text-[#d1ff64] flex items-center justify-center font-black text-[12px] overflow-hidden shrink-0 relative">
                     {p.logoUrl ? (
-                      <img src={p.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
+                      <img key={p.logoUrl} src={p.logoUrl} className="w-full h-full object-cover bg-white relative z-10" onError={(e) => e.target.style.display = 'none'}/>
                     ) : null}
                     <span className="absolute inset-0 flex items-center justify-center">{p.brandName ? p.brandName[0].toUpperCase() : '?'}</span>
                   </div>
