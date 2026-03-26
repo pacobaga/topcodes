@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useParams, useNavigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useParams, Link } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
@@ -7,22 +7,22 @@ import {
 } from 'firebase/auth';
 import { 
   getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, 
-  onSnapshot, deleteDoc, getDocs, query, where, increment 
+  onSnapshot, deleteDoc, getDocs, increment 
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
-  Copy, Plus, Trash2, LogOut, User, Zap, Tag, MapPin, 
-  ExternalLink, Link2, Search, Instagram, Eye, LayoutDashboard, 
-  Settings, Users, Activity, BarChart3, Image as ImageIcon, Lock, 
-  ChevronRight, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
+  Copy, Plus, Trash2, LogOut, User, Zap, ExternalLink, Link2, Search, 
+  Instagram, Eye, LayoutDashboard, Settings, Users, Activity, ImageIcon, 
+  Lock, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
   Youtube, Twitter, Music
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+
+// IMPORTANTE: Aquí van las gráficas de barras
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // ==========================================
 // 1. CONFIGURACIÓN FIREBASE 
 // ==========================================
-// ⚠️ RECUERDA PEGAR TUS CLAVES REALES AQUÍ:
 const firebaseConfig = {
   apiKey: "AIzaSyBwZyz9UqDCGY7wbO2B2cGPSAkqebx4iV4",
   authDomain: "top-codes-7208c.firebaseapp.com",
@@ -276,15 +276,9 @@ function TabOverview({ profile, promotions, spotUrl }) {
   const [selectedPromo, setSelectedPromo] = useState('all');
 
   useEffect(() => {
-    // 1. Filtrar promociones según el selector
-    const activePromos = selectedPromo === 'all' 
-      ? promotions 
-      : promotions.filter(p => p.id === selectedPromo);
-
-    // 2. Vistas (Si es una promo específica, ponemos N/A porque las vistas son globales del Spot)
+    const activePromos = selectedPromo === 'all' ? promotions : promotions.filter(p => p.id === selectedPromo);
     const totalVistas = selectedPromo === 'all' ? (profile?.views || 0) : 'N/A';
     
-    // 3. Cálculos matemáticos reales
     let totalClics = 0;
     let totalProjValue = 0;
     let isPointsOnly = true;
@@ -294,7 +288,6 @@ function TabOverview({ profile, promotions, spotUrl }) {
       const clicks = promo.stats?.totalClicks || 0;
       totalClics += clicks;
       
-      // Simulamos una tasa de conversión de venta del 3% sobre los clics
       const conversions = clicks * 0.03; 
       const val = parseFloat(promo.commissionValue) || 0;
 
@@ -303,7 +296,6 @@ function TabOverview({ profile, promotions, spotUrl }) {
          hasMoney = true;
          isPointsOnly = false;
       } else if (promo.commissionType === '%') {
-         // Si es %, asumimos un ticket promedio de compra de $500 para el cálculo
          totalProjValue += conversions * (500 * (val / 100));
          hasMoney = true;
          isPointsOnly = false;
@@ -313,7 +305,6 @@ function TabOverview({ profile, promotions, spotUrl }) {
       }
     });
 
-    // Formatear el prefijo/sufijo dependiendo de si son dólares o puntos
     const projPrefix = hasMoney || (!isPointsOnly && totalProjValue > 0) ? '$' : '';
     const projSuffix = isPointsOnly && totalProjValue > 0 ? ' Pts' : '';
 
@@ -325,22 +316,16 @@ function TabOverview({ profile, promotions, spotUrl }) {
     });
   }, [profile, promotions, selectedPromo]);
 
-  // Generador de datos para la gráfica de 30 días basada en los clics totales
   const chartData = Array.from({ length: 30 }, (_, i) => {
     const day = i + 1;
     let clicsSimulados = 0;
-    // Simulamos que el 40% de clics caen el día 1, 15% los días 2-3, y el resto es "Long Tail"
     if (stats.clicks > 0) {
       if (day === 1) clicsSimulados = stats.clicks * 0.4;
       else if (day <= 3) clicsSimulados = stats.clicks * 0.15;
       else if (day <= 7) clicsSimulados = stats.clicks * 0.05;
       else clicsSimulados = (stats.clicks * 0.25) / 23;
     }
-    
-    return {
-      name: `D${day}`,
-      clics: Math.max(0, Math.floor(clicsSimulados + (Math.random() * (stats.clicks > 0 ? 2 : 0))))
-    };
+    return { name: `D${day}`, clics: Math.max(0, Math.floor(clicsSimulados + (Math.random() * (stats.clicks > 0 ? 2 : 0)))) };
   });
 
   return (
@@ -352,7 +337,6 @@ function TabOverview({ profile, promotions, spotUrl }) {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* NUEVO: Selector de Campañas */}
           <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center">
              <select 
                 className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-600 outline-none px-4 py-2 cursor-pointer appearance-none"
@@ -360,12 +344,9 @@ function TabOverview({ profile, promotions, spotUrl }) {
                 onChange={(e) => setSelectedPromo(e.target.value)}
              >
                 <option value="all">Todas las Campañas (Total)</option>
-                {promotions.map(p => (
-                  <option key={p.id} value={p.id}>{p.brandName} ({p.discount})</option>
-                ))}
+                {promotions.map(p => <option key={p.id} value={p.id}>{p.brandName} ({p.discount})</option>)}
              </select>
           </div>
-
           <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm">
             <div className="px-4 hidden sm:block">
               <p className="text-[9px] font-black uppercase text-slate-400 mb-1">Link de tu Spot</p>
@@ -418,10 +399,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 'bold'}} />
               <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} />
-              <Tooltip 
-                 cursor={{fill: '#f8fafc'}}
-                 contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} 
-              />
+              <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} />
               <Bar dataKey="clics" fill="#000" radius={[4, 4, 0, 0]} barSize={12} />
             </BarChart>
           </ResponsiveContainer>
@@ -433,28 +411,14 @@ function TabOverview({ profile, promotions, spotUrl }) {
 
 // --- PESTAÑA: PROMOCIONES ---
 function TabPromotions({ user, profile, promotions }) {
-  const [newPromo, setNewPromo] = useState({ 
-    brandName: '', 
-    brandDomain: '', 
-    discount: '', 
-    code: '', 
-    originalUrl: '',
-    niche: '',
-    commissionType: '%',
-    commissionValue: ''
-  });
+  const [newPromo, setNewPromo] = useState({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '' });
   const [editingId, setEditingId] = useState(null); 
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // LA MAGIA BLINDADA (Y ANTI-ADBLOCKERS)
   const getCleanDomain = (domain) => {
     if (!domain) return '';
-    return domain.toLowerCase()
-                 .replace(/^https?:\/\//, '') // Quita http:// o https://
-                 .replace(/^www\./, '')       // Quita el www.
-                 .split('/')[0]               // Quita todo después del .com
-                 .trim();
+    return domain.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].trim();
   };
   
   const cleanDomain = getCleanDomain(newPromo.brandDomain);
@@ -477,65 +441,36 @@ function TabPromotions({ user, profile, promotions }) {
 
     try {
       const promoData = {
-        brandName: newPromo.brandName,
-        brandDomain: newPromo.brandDomain || '',
-        discount: newPromo.discount,
-        code: newPromo.code,
-        originalUrl: newPromo.originalUrl,
-        niche: newPromo.niche,
-        commissionType: newPromo.commissionType || '%',
-        commissionValue: newPromo.commissionValue || '',
-        trackedUrl,
-        logoUrl: previewLogoUrl
+        brandName: newPromo.brandName, brandDomain: newPromo.brandDomain || '', discount: newPromo.discount,
+        code: newPromo.code, originalUrl: newPromo.originalUrl, niche: newPromo.niche,
+        commissionType: newPromo.commissionType || '%', commissionValue: newPromo.commissionValue || '',
+        trackedUrl, logoUrl: previewLogoUrl
       };
 
       if (editingId) {
-        // ACTUALIZAR DEAL EXISTENTE (Con parche para promos viejas)
         await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', editingId), promoData);
-        
-        // Usamos setDoc con merge: true para que si el clon público no existía, lo cree en lugar de crashear
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', editingId), {
-          ownerId: user.uid,
-          username: profile.username,
-          ...promoData
-        }, { merge: true });
-        
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', editingId), { ownerId: user.uid, username: profile.username, ...promoData }, { merge: true });
         setMsg('✅ ¡Deal actualizado con éxito!');
       } else {
-        // CREAR NUEVO DEAL
         promoData.stats = { totalClicks: 0 };
         promoData.createdAt = new Date().toISOString();
         const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'promotions'), promoData);
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), {
-          ownerId: user.uid,
-          username: profile.username,
-          ...promoData
-        });
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), { ownerId: user.uid, username: profile.username, ...promoData });
         setMsg('✅ ¡Deal publicado con éxito!');
       }
-
-      // Limpiamos todo
       handleCancelEdit();
       setTimeout(() => setMsg(''), 4000);
-    } catch (error) {
-      setMsg(`❌ Error: ${error.message}`);
-    }
+    } catch (error) { setMsg(`❌ Error: ${error.message}`); }
     setLoading(false);
   };
 
   const handleEditClick = (promo) => {
     setNewPromo({
-      brandName: promo.brandName || '',
-      brandDomain: promo.brandDomain || '',
-      discount: promo.discount || '',
-      code: promo.code || '',
-      originalUrl: promo.originalUrl || '',
-      niche: promo.niche || '',
-      commissionType: promo.commissionType || '%',
-      commissionValue: promo.commissionValue || ''
+      brandName: promo.brandName || '', brandDomain: promo.brandDomain || '', discount: promo.discount || '',
+      code: promo.code || '', originalUrl: promo.originalUrl || '', niche: promo.niche || '',
+      commissionType: promo.commissionType || '%', commissionValue: promo.commissionValue || ''
     });
     setEditingId(promo.id);
-    // Un toque pro: sube la pantalla suavemente hacia el formulario
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -553,55 +488,33 @@ function TabPromotions({ user, profile, promotions }) {
   return (
     <div className="flex flex-col xl:flex-row gap-12 animate-in fade-in duration-700">
       <div className="flex-1 space-y-10">
-        
-        {/* EL FORMULARIO */}
         <div className={`bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border ${editingId ? 'border-black shadow-lg' : 'border-slate-100'} transition-all`}>
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-lg font-black uppercase tracking-tighter italic flex items-center gap-3">
               {editingId ? <Settings size={20} className="text-[#8b5cf6]"/> : <Plus size={20}/>}
               {editingId ? 'Editar Deal' : 'Nuevo Link / Cupón'}
             </h3>
-            {editingId && (
-              <button onClick={handleCancelEdit} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors">Cancelar</button>
-            )}
+            {editingId && <button onClick={handleCancelEdit} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors">Cancelar</button>}
           </div>
 
           <form onSubmit={handleSave} className="space-y-6">
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white rounded-full border border-slate-200 shadow-sm flex items-center justify-center shrink-0 overflow-hidden relative">
-                  {previewLogoUrl ? (
-                    <img key={previewLogoUrl} src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10 p-2" />
-                  ) : null}
-                  <span className="absolute inset-0 flex items-center justify-center font-black text-slate-300 text-xl">
-                    {newPromo.brandName ? newPromo.brandName.charAt(0).toUpperCase() : <ImageIcon size={24}/>}
-                  </span>
+                  {previewLogoUrl ? <img key={previewLogoUrl} src={previewLogoUrl} alt="Logo" className="w-full h-full object-cover bg-white relative z-10 p-2" /> : null}
+                  <span className="absolute inset-0 flex items-center justify-center font-black text-slate-300 text-xl">{newPromo.brandName ? newPromo.brandName.charAt(0).toUpperCase() : <ImageIcon size={24}/>}</span>
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-black uppercase tracking-widest text-black mb-1">Logo Inteligente</p>
                   <p className="text-[10px] font-bold text-slate-400">Escribe o pega el sitio web de la marca y nosotros buscamos su logo oficial.</p>
                 </div>
               </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input type="text" placeholder="Marca (ej. Sephora)" required className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brandName} onChange={e => setNewPromo({...newPromo, brandName: e.target.value})}/>
                 <input type="text" placeholder="Web (ej. sephora.com.mx)" className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={newPromo.brandDomain} onChange={e => setNewPromo({...newPromo, brandDomain: e.target.value})}/>
                 <select required className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64] appearance-none" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}>
                   <option value="" disabled>Nicho</option>
-                  <option value="Salud y Belleza">Salud y Belleza</option>
-                  <option value="Deportes">Deportes</option>
-                  <option value="Moda y Estilo">Moda y Estilo</option>
-                  <option value="Tecnología">Tecnología</option>
-                  <option value="Lifestyle">Lifestyle</option>
-                  <option value="Viajes">Viajes</option>
-                  <option value="Fitness">Fitness</option>
-                  <option value="Gaming">Gaming</option>
-                  <option value="Comedia">Comedia</option>
-                  <option value="Educación">Educación</option>
-                  <option value="Finanzas">Finanzas / Negocios</option>
-                  <option value="Foodie">Foodie / Gastronomía</option>
-                  <option value="Arte">Arte y Diseño</option>
-                  <option value="Otro">Otro</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
@@ -631,15 +544,12 @@ function TabPromotions({ user, profile, promotions }) {
           </form>
         </div>
 
-        {/* LISTA DE DEALS ACTIVOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promotions.map(promo => (
             <div key={promo.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-black transition-colors">
               <div className="flex items-center gap-3">
                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black text-sm shrink-0 overflow-hidden border border-slate-200 relative">
-                  {promo.logoUrl ? (
-                    <img key={promo.logoUrl} src={promo.logoUrl} className="w-full h-full object-cover bg-white relative z-10 p-2"/>
-                  ) : null}
+                  {promo.logoUrl ? <img key={promo.logoUrl} src={promo.logoUrl} className="w-full h-full object-cover bg-white relative z-10 p-2"/> : null}
                   <span className="absolute inset-0 flex items-center justify-center">{promo.brandName ? promo.brandName.charAt(0).toUpperCase() : '?'}</span>
                  </div>
                  <div>
@@ -654,9 +564,7 @@ function TabPromotions({ user, profile, promotions }) {
                    <p className="text-[8px] font-black text-slate-300 uppercase">Clics</p>
                 </div>
                 <div className="flex flex-col gap-1">
-                  {/* BOTÓN EDITAR */}
                   <button onClick={() => handleEditClick(promo)} title="Editar" className="p-2 text-slate-300 hover:text-[#8b5cf6] bg-slate-50 hover:bg-purple-50 rounded-lg transition-colors"><Settings size={14}/></button>
-                  {/* BOTÓN ELIMINAR */}
                   <button onClick={() => handleDelete(promo.id)} title="Eliminar" className="p-2 text-slate-300 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={14}/></button>
                 </div>
               </div>
@@ -665,7 +573,6 @@ function TabPromotions({ user, profile, promotions }) {
         </div>
       </div>
 
-      {/* SIMULADOR MÓVIL */}
       <div className="hidden xl:flex flex-col items-center w-[380px] shrink-0 sticky top-10 h-[750px]">
         <div className="w-[320px] h-[650px] bg-white rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden relative">
           <div className="absolute top-0 w-full h-8 bg-slate-900 rounded-b-3xl flex justify-center items-center z-20"><div className="w-16 h-4 bg-black rounded-b-2xl"></div></div>
@@ -679,9 +586,7 @@ function TabPromotions({ user, profile, promotions }) {
               {promotions.map(p => (
                 <div key={p.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 text-left relative overflow-hidden flex items-center gap-3">
                   <div className="w-10 h-10 bg-black rounded-xl text-[#d1ff64] flex items-center justify-center font-black text-[12px] overflow-hidden shrink-0 relative">
-                    {p.logoUrl ? (
-                      <img key={p.logoUrl} src={p.logoUrl} className="w-full h-full object-cover bg-white relative z-10 p-1"/>
-                    ) : null}
+                    {p.logoUrl ? <img key={p.logoUrl} src={p.logoUrl} className="w-full h-full object-cover bg-white relative z-10 p-1"/> : null}
                     <span className="absolute inset-0 flex items-center justify-center">{p.brandName ? p.brandName[0].toUpperCase() : '?'}</span>
                   </div>
                   <div className="flex-1">
@@ -703,23 +608,13 @@ function TabPromotions({ user, profile, promotions }) {
 // --- PESTAÑA: PERFIL ---
 function TabProfile({ user, profile }) {
   const [formData, setFormData] = useState({ 
-    bio: profile.bio || '', 
-    photoUrl: profile.photoUrl || '',
-    tiktokUrl: profile.tiktokUrl || '',
-    youtubeUrl: profile.youtubeUrl || '',
-    xUrl: profile.xUrl || ''
+    bio: profile.bio || '', photoUrl: profile.photoUrl || '', tiktokUrl: profile.tiktokUrl || '', youtubeUrl: profile.youtubeUrl || '', xUrl: profile.xUrl || ''
   });
   const [msg, setMsg] = useState('');
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    setFormData({
-      bio: profile.bio || '', 
-      photoUrl: profile.photoUrl || '',
-      tiktokUrl: profile.tiktokUrl || '',
-      youtubeUrl: profile.youtubeUrl || '',
-      xUrl: profile.xUrl || ''
-    });
+    setFormData({ bio: profile.bio || '', photoUrl: profile.photoUrl || '', tiktokUrl: profile.tiktokUrl || '', youtubeUrl: profile.youtubeUrl || '', xUrl: profile.xUrl || '' });
   }, [profile]);
 
   const handleSave = async (e) => {
@@ -729,39 +624,25 @@ function TabProfile({ user, profile }) {
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), formData);
       setMsg('✅ Perfil actualizado correctamente.');
       setTimeout(() => setMsg(''), 4000);
-    } catch (error) {
-      setMsg(`❌ Error al guardar: ${error.message}`);
-    }
+    } catch (error) { setMsg(`❌ Error al guardar: ${error.message}`); }
   };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 2097152) return alert("⚠️ La imagen es muy pesada. Por favor sube una foto menor a 2MB.");
 
-    if (file.size > 2097152) {
-      alert("⚠️ La imagen es muy pesada. Por favor sube una foto menor a 2MB.");
-      return;
-    }
-
-    setUploading(true);
-    setMsg('');
-    
+    setUploading(true); setMsg('');
     try {
       const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/profilePic_${Date.now()}`);
       await uploadBytes(fileRef, file);
       const url = await getDownloadURL(fileRef);
-      
       await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), { photoUrl: url });
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), { photoUrl: url });
-      
       setFormData(prev => ({ ...prev, photoUrl: url }));
       setMsg('📸 ¡Foto subida y guardada con éxito!');
       setTimeout(() => setMsg(''), 4000);
-    } catch (error) {
-      setMsg(`❌ ERROR: ${error.message}`);
-    } finally {
-      setUploading(false); 
-    }
+    } catch (error) { setMsg(`❌ ERROR: ${error.message}`); } finally { setUploading(false); }
   };
 
   return (
@@ -784,7 +665,6 @@ function TabProfile({ user, profile }) {
                 {uploading ? 'Subiendo...' : 'Subir Foto'}
                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
               </label>
-              <p className="text-[10px] font-bold text-slate-400 mt-4 leading-relaxed max-w-sm">Te recomendamos subir la <strong className="text-black">misma foto de tu Instagram</strong>.</p>
             </div>
           </div>
         </div>
@@ -796,24 +676,13 @@ function TabProfile({ user, profile }) {
 
         <div className="pt-6 border-t border-slate-100 space-y-6">
           <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><Globe size={16}/> Otras Redes Sociales</h3>
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Music size={14}/> TikTok (URL)</label>
-            <input type="url" placeholder="https://tiktok.com/@..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.tiktokUrl} onChange={e=>setFormData({...formData, tiktokUrl: e.target.value})}/>
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Youtube size={14}/> YouTube (URL)</label>
-            <input type="url" placeholder="https://youtube.com/..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.youtubeUrl} onChange={e=>setFormData({...formData, youtubeUrl: e.target.value})}/>
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Twitter size={14}/> X / Twitter (URL)</label>
-            <input type="url" placeholder="https://x.com/..." className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.xUrl} onChange={e=>setFormData({...formData, xUrl: e.target.value})}/>
-          </div>
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Music size={14}/> TikTok (URL)</label><input type="url" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.tiktokUrl} onChange={e=>setFormData({...formData, tiktokUrl: e.target.value})}/></div>
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Youtube size={14}/> YouTube (URL)</label><input type="url" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.youtubeUrl} onChange={e=>setFormData({...formData, youtubeUrl: e.target.value})}/></div>
+          <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-400 ml-4 flex items-center gap-2"><Twitter size={14}/> X / Twitter (URL)</label><input type="url" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={formData.xUrl} onChange={e=>setFormData({...formData, xUrl: e.target.value})}/></div>
         </div>
 
-        <div className="pt-4">
-          <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all">Guardar Cambios</button>
-          {msg && <div className="mt-4 bg-green-50 border border-green-200 text-green-700 p-4 rounded-2xl text-xs font-bold text-center animate-in slide-in-from-top-2">{msg}</div>}
-        </div>
+        <div className="pt-4"><button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all">Guardar Cambios</button></div>
+        {msg && <div className="mt-4 bg-green-50 text-green-700 p-4 rounded-2xl text-xs font-bold text-center">{msg}</div>}
       </form>
     </div>
   );
@@ -831,10 +700,7 @@ function SuperAdmin() {
 
   const handleAuth = (e) => {
     e.preventDefault();
-    if (pass === MASTER_KEY) {
-      setAuthenticated(true);
-      fetchUsers();
-    } else { alert("Clave incorrecta."); }
+    if (pass === MASTER_KEY) { setAuthenticated(true); fetchUsers(); } else { alert("Clave incorrecta."); }
   };
 
   const fetchUsers = async () => {
@@ -847,20 +713,16 @@ function SuperAdmin() {
     try {
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', editingUser.username), editingUser);
       await updateDoc(doc(db, 'artifacts', appId, 'users', editingUser.uid, 'settings', 'profile'), editingUser);
-      alert("Usuario actualizado correctamente.");
-      setEditingUser(null);
-      fetchUsers();
+      alert("Usuario actualizado correctamente."); setEditingUser(null); fetchUsers();
     } catch (err) { alert("Error al actualizar: " + err.message); }
   };
 
   const handleDeleteUser = async (username, uid) => {
-    if(!window.confirm(`¿Seguro que deseas eliminar a @${username}? Esta acción no se puede deshacer.`)) return;
+    if(!window.confirm(`¿Seguro que deseas eliminar a @${username}?`)) return;
     try {
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', username));
       await deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'));
-      alert("Usuario eliminado del sistema.");
-      setEditingUser(null);
-      fetchUsers();
+      alert("Usuario eliminado."); setEditingUser(null); fetchUsers();
     } catch (err) { alert("Error al eliminar: " + err.message); }
   };
 
@@ -897,14 +759,9 @@ function SuperAdmin() {
                   <td className="p-6 text-slate-500">{u.email}</td>
                   <td className="p-6"><span className="bg-slate-100 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest">{u.category}</span></td>
                   <td className="p-6 text-center font-black text-xl italic">{u.views || 0}</td>
-                  <td className="p-6 text-right">
-                    <button onClick={() => setEditingUser(u)} className="p-2 text-slate-400 hover:text-black transition-colors"><Settings size={18}/></button>
-                  </td>
+                  <td className="p-6 text-right"><button onClick={() => setEditingUser(u)} className="p-2 text-slate-400 hover:text-black transition-colors"><Settings size={18}/></button></td>
                 </tr>
               ))}
-              {users.length === 0 && (
-                 <tr><td colSpan="5" className="p-10 text-center text-slate-400 italic font-medium">No hay usuarios registrados en la infraestructura.</td></tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -912,32 +769,25 @@ function SuperAdmin() {
 
       {editingUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl">
             <h2 className="text-2xl font-black mb-6 italic uppercase tracking-tighter">Editar @{editingUser.username}</h2>
             <form onSubmit={handleUpdateUser} className="space-y-5">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Nicho</label>
-                <select className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={editingUser.category} onChange={e => setEditingUser({...editingUser, category: e.target.value})}>
-                  <option value="">Seleccionar Nicho</option>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                <select className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={editingUser.category} onChange={e => setEditingUser({...editingUser, category: e.target.value})}>
+                  <option value="">Seleccionar Nicho</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Ciudades</label>
-                <input type="text" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={editingUser.cities} onChange={e => setEditingUser({...editingUser, cities: e.target.value})}/>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Email (Solo Lectura)</label>
-                <input type="email" disabled className="w-full bg-slate-100 border-none rounded-2xl p-4 text-sm font-bold text-slate-400 outline-none cursor-not-allowed" value={editingUser.email} />
+                <input type="text" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={editingUser.cities} onChange={e => setEditingUser({...editingUser, cities: e.target.value})}/>
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors">Cancelar</button>
-                <button type="submit" className="flex-1 bg-[#d1ff64] text-black py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all shadow-lg">Guardar</button>
+                <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-slate-100 py-4 rounded-2xl font-black text-xs uppercase">Cancelar</button>
+                <button type="submit" className="flex-1 bg-[#d1ff64] text-black py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Guardar</button>
               </div>
               <div className="pt-6 border-t border-slate-100 text-center">
-                <button type="button" onClick={() => handleDeleteUser(editingUser.username, editingUser.uid)} className="text-red-500 text-[10px] font-black uppercase tracking-widest hover:text-red-600 transition-colors flex items-center justify-center gap-2 w-full">
-                  <Trash2 size={12}/> Eliminar Influencer
-                </button>
+                <button type="button" onClick={() => handleDeleteUser(editingUser.username, editingUser.uid)} className="text-red-500 text-[10px] font-black uppercase tracking-widest hover:text-red-600 transition-colors flex items-center justify-center gap-2 w-full"><Trash2 size={12}/> Eliminar Influencer</button>
               </div>
             </form>
           </div>
@@ -1013,8 +863,8 @@ function PublicSpot() {
             <button key={promo.id} onClick={()=>handleClick(promo)} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-64 text-left hover:border-black hover:shadow-xl transition-all group overflow-hidden relative">
               <div className="absolute -top-4 -right-4 opacity-[0.02] text-black group-hover:opacity-[0.05] transition-opacity"><Zap size={120} /></div>
               <div className="flex justify-between items-start relative z-10 w-full">
-                <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center font-black text-[#d1ff64] text-lg shadow-lg overflow-hidden border border-slate-800">
-                  {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover"/> : (promo.brandName ? promo.brandName[0].toUpperCase() : '?')}
+                <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center font-black text-[#d1ff64] text-lg shadow-lg overflow-hidden border border-slate-800 p-1">
+                  {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover bg-white rounded-xl"/> : (promo.brandName ? promo.brandName[0].toUpperCase() : '?')}
                 </div>
                 <div className="bg-slate-50 p-3 rounded-2xl text-slate-400 group-hover:bg-[#d1ff64] group-hover:text-black transition-colors"><ExternalLink size={16} /></div>
               </div>
@@ -1026,7 +876,6 @@ function PublicSpot() {
             </button>
           ))}
         </div>
-        <footer className="mt-24 text-center opacity-30"><p className="text-[9px] font-black uppercase tracking-[0.5em]">Powered by TopCodes</p></footer>
       </div>
     </div>
   );
