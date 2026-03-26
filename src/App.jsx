@@ -602,17 +602,30 @@ function TabProfile({ user, profile }) {
     });
   }, [profile]);
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    try {
-      await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), formData);
-      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), formData);
-      setMsg('✅ Perfil actualizado correctamente.');
-      setTimeout(() => setMsg(''), 4000);
-    } catch (error) {
-      setMsg(`❌ Error al guardar: ${error.message}`);
-    }
-  };
+ // Subir Logo con Validación de Tamaño
+ const handleLogoUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Validación: Si pesa más de 2MB (2 * 1024 * 1024 bytes), rebótalo.
+  if (file.size > 2097152) {
+    alert("⚠️ La imagen es muy pesada. Por favor sube un logo menor a 2MB.");
+    return;
+  }
+
+  setUploadingLogo(true);
+  try {
+    const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/brands/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
+    setPromoLogoUrl(url);
+  } catch (error) {
+    console.error(error);
+    alert(`❌ Error técnico: ${error.message}`);
+  } finally {
+    setUploadingLogo(false);
+  }
+};
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
