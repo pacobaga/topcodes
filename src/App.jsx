@@ -435,6 +435,7 @@ function TabPromotions({ user, profile, promotions }) {
 }
 
 // --- PESTAÑA: PERFIL ---
+// --- PESTAÑA: PERFIL ---
 function TabProfile({ user, profile }) {
   const [formData, setFormData] = useState({ 
     bio: profile.bio || '', 
@@ -446,7 +447,6 @@ function TabProfile({ user, profile }) {
   const [msg, setMsg] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // El vigilante para que no se borren los links
   useEffect(() => {
     setFormData({
       bio: profile.bio || '', 
@@ -459,57 +459,48 @@ function TabProfile({ user, profile }) {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), formData);
-    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), formData);
-    setMsg('Perfil actualizado correctamente.');
-    setTimeout(() => setMsg(''), 3000);
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), formData);
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), formData);
+      setMsg('✅ Perfil actualizado correctamente.');
+      setTimeout(() => setMsg(''), 4000);
+    } catch (error) {
+      setMsg(`❌ Error al guardar: ${error.message}`);
+    }
   };
 
-  // El motor mágico que sube la foto a tu disco duro de Firebase
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
-    setMsg(''); // Limpia mensajes anteriores
-
+    setMsg(''); // Limpia mensajes viejos
+    
     try {
-      // 1. Prepara el nombre del archivo en la nube
-      const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/profilePic`);
-      
-      // 2. Sube la imagen
+      // Le agregamos "Date.now()" para evitar que los celulares guarden en caché la foto vieja
+      const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/profilePic_${Date.now()}`);
       await uploadBytes(fileRef, file);
-      
-      // 3. Pide el link público permanente
       const url = await getDownloadURL(fileRef);
       
-      // 4. Lo guarda automáticamente para que el influencer no tenga que hacer nada más
       await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), { photoUrl: url });
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), { photoUrl: url });
       
       setFormData(prev => ({ ...prev, photoUrl: url }));
-      setMsg('¡Foto subida y guardada con éxito!');
-      setTimeout(() => setMsg(''), 3000);
-      
+      setMsg('📸 ¡Foto subida y guardada con éxito!');
+      setTimeout(() => setMsg(''), 4000);
     } catch (error) {
-      // AQUÍ ESTÁ EL CAPTURADOR DE ERRORES REALES
-      console.error("Error completo:", error);
-      setMsg(`ERROR FIREBASE: ${error.code} - ${error.message}`);
+      setMsg(`❌ ERROR FIREBASE: ${error.code || error.message}`);
+      console.error(error);
+    } finally {
+      // ESTA ES LA MAGIA: Pase lo que pase, destraba el botón
+      setUploading(false); 
     }
-    setUploading(false);
   };
 
   return (
     <div className="max-w-2xl bg-white p-8 md:p-12 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in duration-700">
       <h2 className="text-2xl font-black tracking-tighter uppercase italic mb-8 flex items-center gap-3"><Settings size={24}/> Ajustes de Perfil</h2>
       
-      {/* Mensajes de éxito o error */}
-      {msg && (
-        <div className={`p-4 rounded-2xl text-xs font-bold mb-8 ${msg.includes('ERROR') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-          {msg}
-        </div>
-      )}
-
       <form onSubmit={handleSave} className="space-y-8">
         
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -517,7 +508,6 @@ function TabProfile({ user, profile }) {
           <p className="text-lg font-black text-black italic">@{profile.username}</p>
         </div>
 
-        {/* --- NUEVO BOTÓN DE SUBIR FOTO --- */}
         <div className="space-y-3 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2"><ImageIcon size={14}/> Foto de Perfil</label>
           <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -555,7 +545,12 @@ function TabProfile({ user, profile }) {
           </div>
         </div>
 
-        <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all">Guardar Cambios</button>
+        {/* --- EL MENSAJE AHORA APARECE AQUÍ ABAJO --- */}
+        <div className="pt-4">
+          <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all">Guardar Cambios</button>
+          {msg && <div className="mt-4 bg-green-50 border border-green-200 text-green-700 p-4 rounded-2xl text-xs font-bold text-center animate-in slide-in-from-top-2">{msg}</div>}
+        </div>
+
       </form>
     </div>
   );
