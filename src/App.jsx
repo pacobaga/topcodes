@@ -627,22 +627,48 @@ function TabProfile({ user, profile }) {
     } catch (error) { setMsg(`❌ Error al guardar: ${error.message}`); }
   };
 
-  const handlePhotoUpload = async (e) => {
+  const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2097152) return alert("⚠️ La imagen es muy pesada. Por favor sube una foto menor a 2MB.");
 
-    setUploading(true); setMsg('');
-    try {
-      const fileRef = ref(storage, `artifacts/${appId}/users/${user.uid}/profilePic_${Date.now()}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
-      await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), { photoUrl: url });
-      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), { photoUrl: url });
-      setFormData(prev => ({ ...prev, photoUrl: url }));
-      setMsg('📸 ¡Foto subida y guardada con éxito!');
-      setTimeout(() => setMsg(''), 4000);
-    } catch (error) { setMsg(`❌ ERROR: ${error.message}`); } finally { setUploading(false); }
+    setUploading(true); 
+    setMsg('');
+
+    // EL TRUCO MAGICO: Leemos la imagen y la convertimos en texto (Base64)
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        // Creamos un lienzo invisible para comprimir la foto a tamaño perfil (250px)
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 250;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // Convertimos el lienzo a un texto súper comprimido (Calidad 80%)
+        const base64String = canvas.toDataURL('image/jpeg', 0.8);
+
+        try {
+          // Guardamos el texto directo en Firestore ¡Adiós Firebase Storage!
+          await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), { photoUrl: base64String });
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), { photoUrl: base64String });
+          
+          setFormData(prev => ({ ...prev, photoUrl: base64String }));
+          setMsg('📸 ¡Foto subida y optimizada al instante!');
+          setTimeout(() => setMsg(''), 4000);
+        } catch (error) { 
+          setMsg(`❌ ERROR: ${error.message}`); 
+        } finally { 
+          setUploading(false); 
+        }
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
