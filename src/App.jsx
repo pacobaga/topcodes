@@ -7,7 +7,7 @@ import {
 } from 'firebase/auth';
 import { 
   getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, 
-  onSnapshot, deleteDoc, getDocs
+  onSnapshot, deleteDoc, getDocs, increment 
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
@@ -15,9 +15,9 @@ import {
   ExternalLink, Link2, Search, Instagram, Eye, LayoutDashboard, 
   Settings, Users, Activity, BarChart3, Image as ImageIcon, Lock, 
   ChevronRight, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
-  Youtube, Twitter, Music, Mail, Code
+  Youtube, Twitter, Music, Code, MessageCircle, X, Send
 } from 'lucide-react';
-import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // ==========================================
 // 1. CONFIGURACIÓN FIREBASE 
@@ -32,6 +32,7 @@ const firebaseConfig = {
   appId: "1:960236695146:web:4963cc8d4faffa47d26413",
   measurementId: "G-RCTZTKDHHK"
 };
+
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -142,15 +143,15 @@ function LandingPage() {
             <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
                 <>
-                  <input type="text" placeholder="Usuario de Instagram (@...)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
+                  <input type="text" placeholder="Usuario de Instagram (@...)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
                   <div className="grid grid-cols-2 gap-3">
-                    <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={category} onChange={e=>setCategory(e.target.value)}><option value="">Nicho</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
-                    <input type="text" placeholder="Ciudades" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={cities} onChange={e=>setCities(e.target.value)}/>
+                    <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={category} onChange={e=>setCategory(e.target.value)}><option value="">Nicho</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                    <input type="text" placeholder="Ciudades" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={cities} onChange={e=>setCities(e.target.value)}/>
                   </div>
                 </>
               )}
-              <input type="email" placeholder="Correo Electrónico" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={email} onChange={e=>setEmail(e.target.value)}/>
-              <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none" value={password} onChange={e=>setPassword(e.target.value)}/>
+              <input type="email" placeholder="Correo Electrónico" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={email} onChange={e=>setEmail(e.target.value)}/>
+              <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={password} onChange={e=>setPassword(e.target.value)}/>
               <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl mt-4">{isLogin ? 'Acceder ahora' : 'Crear mi Spot'}</button>
             </form>
             {isLogin && <div className="mt-8 text-center"><button onClick={handleResetPassword} type="button" className="text-[10px] font-black uppercase text-slate-400 hover:text-black tracking-widest transition-colors">¿Olvidaste tu contraseña?</button></div>}
@@ -168,7 +169,9 @@ function DashboardLayout({ user }) {
   const [profile, setProfile] = useState(null);
   const [promotions, setPromotions] = useState([]);
   const [activeTab, setActiveTab] = useState('overview'); 
-  const supportEmail = "ayuda@topcodes.com"; 
+
+  // 🟢 CONFIGURACIÓN DE WHATSAPP (SOPORTE B2B)
+  const supportPhone = "525529402572"; // <-- ⚠️ PON TU NÚMERO REAL DE WHATSAPP AQUÍ (Ej. 52 para México + 10 dígitos)
 
   useEffect(() => {
     const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
@@ -179,10 +182,15 @@ function DashboardLayout({ user }) {
   }, [user]);
 
   if (!profile) return <LoadingScreen />;
+  
   const publicLink = `${window.location.origin}/${profile.username}`;
+  
+  // Generar link dinámico de WhatsApp con mensaje pre-escrito
+  const waMessage = encodeURIComponent(`¡Hola equipo TopCodes! Necesito ayuda con mi cuenta (@${profile.username}).`);
+  const waLink = `https://wa.me/${supportPhone}?text=${waMessage}`;
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans relative">
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col hidden lg:flex shrink-0 z-30 shadow-sm">
         <div className="p-8 flex items-center gap-3"><div className="bg-black p-2 rounded-xl"><Zap size={20} className="text-[#d1ff64] fill-current" /></div><span className="font-black uppercase tracking-tighter text-xl italic">TopCodes</span></div>
         <nav className="p-4 flex-grow space-y-1 mt-4">
@@ -191,7 +199,10 @@ function DashboardLayout({ user }) {
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
         </nav>
         <div className="p-6 border-t border-slate-100 space-y-2">
-          <a href={`mailto:${supportEmail}?subject=Ayuda con mi Spot TopCodes (@${profile.username})`} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"><Mail size={16} /> Soporte</a>
+          {/* BOTÓN WHATSAPP SIDEBAR */}
+          <a href={waLink} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-green-50 text-green-600 hover:bg-green-100 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
+            <MessageCircle size={16} /> WhatsApp
+          </a>
           <button onClick={() => signOut(auth)} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-red-500 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"><LogOut size={16} /> Salir </button>
         </div>
       </aside>
@@ -204,17 +215,22 @@ function DashboardLayout({ user }) {
             <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
             <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
             <div className="w-px h-6 bg-slate-200 mx-1"></div>
-            <a href={`mailto:${supportEmail}?subject=Ayuda con mi Spot (@${profile.username})`} className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl"><Mail size={18}/></a>
+            {/* BOTÓN WHATSAPP MÓVIL */}
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="p-2.5 text-green-500 hover:bg-green-50 rounded-xl" title="Soporte por WhatsApp"><MessageCircle size={18}/></a>
             <button onClick={() => signOut(auth)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl"><LogOut size={18}/></button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 pb-24">
           {activeTab === 'overview' && <TabOverview profile={profile} promotions={promotions} spotUrl={publicLink} />}
           {activeTab === 'promos' && <TabPromotions user={user} profile={profile} promotions={promotions} />}
           {activeTab === 'profile' && <TabProfile user={user} profile={profile} />}
         </div>
       </main>
+
+      {/* 🤖 EL ASISTENTE VIRTUAL (TOPBOT) */}
+      <SupportChatbot userName={profile.username} />
+
     </div>
   );
 }
@@ -222,6 +238,95 @@ function DashboardLayout({ user }) {
 const NavItem = ({ active, icon, label, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${active ? 'bg-black text-[#d1ff64]' : 'text-slate-400 hover:bg-slate-50'}`}>{icon} {label}</button>
 );
+
+// ==========================================
+// COMPONENTE: CHATBOT DE SOPORTE (TopBot)
+// ==========================================
+function SupportChatbot({ userName }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState([
+    { text: `¡Hola @${userName}! Soy TopBot ⚡️ ¿En qué te puedo ayudar con tus campañas hoy?`, sender: 'bot' }
+  ]);
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    const newMsg = { text: input, sender: 'user' };
+    setMessages(prev => [...prev, newMsg]);
+    setInput('');
+
+    // Respuestas automáticas inteligentes simuladas
+    setTimeout(() => {
+      let botReply = "He guardado tu mensaje. Si es algo urgente, haz clic en el botón de WhatsApp del menú para hablar con el CEO directamente.";
+      const lowerInput = input.toLowerCase();
+
+      if (lowerInput.includes('hola') || lowerInput.includes('buenas')) {
+        botReply = "¡Hola! ¿Todo bien con tus links hoy? Recuerda que el botón de WhatsApp está siempre disponible en tu menú.";
+      } else if (lowerInput.includes('pago') || lowerInput.includes('dinero') || lowerInput.includes('comision')) {
+        botReply = "TopCodes proyecta tus ventas basándose en los clics, pero los pagos reales te los hace directamente cada marca según tu contrato. Nosotros te damos los datos para que les cobres. 💸";
+      } else if (lowerInput.includes('marca') || lowerInput.includes('logo') || lowerInput.includes('foto')) {
+        botReply = "Extraemos los logos automáticamente de la web de la marca. Si no sale o quieres subir uno especial, ve a 'Promociones', edita la campaña y podrás subir el logo tú mismo.";
+      } else if (lowerInput.includes('borrar') || lowerInput.includes('eliminar')) {
+        botReply = "Para eliminar una marca, ve a la pestaña 'Promociones' y dale clic al icono de bote de basura rojo junto a tu código.";
+      }
+
+      setMessages(prev => [...prev, { text: botReply, sender: 'bot' }]);
+    }, 1000);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className={`fixed bottom-6 right-6 w-16 h-16 bg-black text-[#d1ff64] rounded-[1.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 transition-transform z-[100] border-2 border-[#d1ff64] ${isOpen ? 'hidden' : 'flex'}`}
+      >
+        <MessageCircle size={28} />
+      </button>
+
+      {isOpen && (
+        <div className="fixed bottom-6 right-6 w-80 sm:w-96 bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-[100] animate-in slide-in-from-bottom-10">
+          <div className="bg-black p-5 flex justify-between items-center text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-[#d1ff64]">
+                <Zap size={20}/>
+              </div>
+              <div>
+                <span className="font-black text-sm uppercase tracking-widest italic block leading-tight">TopBot</span>
+                <span className="text-[9px] text-[#d1ff64] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#d1ff64] rounded-full animate-pulse"></span> En línea</span>
+              </div>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-xl"><X size={18}/></button>
+          </div>
+
+          <div className="flex-1 p-5 overflow-y-auto h-80 space-y-4 bg-slate-50 flex flex-col">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] p-4 text-xs font-bold leading-relaxed shadow-sm ${msg.sender === 'user' ? 'bg-[#d1ff64] text-black rounded-[1.5rem] rounded-br-md' : 'bg-white border border-slate-200 text-slate-700 rounded-[1.5rem] rounded-bl-md'}`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleSend} className="p-4 bg-white border-t border-slate-100 flex gap-2">
+            <input
+              type="text"
+              placeholder="Escribe tu duda..."
+              className="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-black"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+            />
+            <button type="submit" className="w-12 h-12 bg-black text-[#d1ff64] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shrink-0 outline-none shadow-md">
+              <Send size={18}/>
+            </button>
+          </form>
+        </div>
+      )}
+    </>
+  );
+}
 
 // --- PESTAÑAS DEL INFLUENCER ---
 function TabOverview({ profile, promotions, spotUrl }) {
@@ -421,14 +526,12 @@ function SuperAdmin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [pass, setPass] = useState('');
   
-  // Data Global
   const [users, setUsers] = useState([]);
   const [allPromos, setAllPromos] = useState([]);
   const [globalStats, setGlobalStats] = useState({ users: 0, views: 0, clicks: 0, projRevenue: 0 });
   
-  // UI States
-  const [activeTab, setActiveTab] = useState('directorio'); // directorio, finanzas, pixeles
-  const [selectedUser, setSelectedUser] = useState(null); // Para editar a un influencer específico
+  const [activeTab, setActiveTab] = useState('directorio'); 
+  const [selectedUser, setSelectedUser] = useState(null); 
   const MASTER_KEY = "TOPCODES_2026"; 
 
   const handleAuth = (e) => {
@@ -437,24 +540,20 @@ function SuperAdmin() {
   };
 
   const fetchAllData = async () => {
-    // 1. Traer Usuarios
     const usersSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'profiles'));
     const usersData = usersSnap.docs.map(d => d.data());
     
-    // 2. Traer Todas las Promociones Públicas
     const promosSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'promotions'));
     const promosData = promosSnap.docs.map(d => ({id: d.id, ...d.data()}));
     
     setUsers(usersData.sort((a,b) => (b.views||0) - (a.views||0)));
     setAllPromos(promosData);
 
-    // 3. Calcular Finanzas Globales de TopCodes
     let tViews = 0; let tClicks = 0; let tMoney = 0;
     usersData.forEach(u => tViews += (u.views || 0));
     promosData.forEach(p => {
       const clics = p.stats?.totalClicks || 0;
       tClicks += clics;
-      // Proyección conservadora: 2% conversión * valor comisión
       if (p.commissionType === '$' && p.commissionValue) { tMoney += (clics * 0.02 * parseFloat(p.commissionValue)); }
       else if (p.commissionType === '%' && p.commissionValue) { tMoney += (clics * 0.02 * (500 * (parseFloat(p.commissionValue)/100))); }
     });
@@ -462,7 +561,6 @@ function SuperAdmin() {
     setGlobalStats({ users: usersData.length, views: tViews, clicks: tClicks, projRevenue: tMoney });
   };
 
-  // Función para guardar cambios cuando estás editando el perfil de un usuario
   const handleUpdateUserProfile = async (e) => {
     e.preventDefault();
     try {
@@ -470,6 +568,17 @@ function SuperAdmin() {
       await updateDoc(doc(db, 'artifacts', appId, 'users', selectedUser.uid, 'settings', 'profile'), selectedUser);
       alert("✅ Usuario actualizado"); fetchAllData();
     } catch (err) { alert("Error: " + err.message); }
+  };
+
+  const handleDeleteUser = async (username, uid) => {
+    if(!window.confirm(`⚠️ PELIGRO: ¿Seguro que deseas eliminar a @${username} y TODA su información?`)) return;
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', username));
+      await deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'));
+      alert("🗑️ Usuario eliminado de la plataforma."); 
+      setSelectedUser(null); 
+      fetchAllData();
+    } catch (err) { alert("Error al eliminar: " + err.message); }
   };
 
   if (!authenticated) return (
@@ -486,7 +595,6 @@ function SuperAdmin() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       
-      {/* NAVBAR ADMIN */}
       <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-4">
           <Zap size={24} className="text-black fill-[#d1ff64]"/>
@@ -502,7 +610,6 @@ function SuperAdmin() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-8 animate-in fade-in duration-500">
         
-        {/* PESTAÑA 1: DIRECTORIO Y AUDITORÍA */}
         {activeTab === 'directorio' && !selectedUser && (
           <div className="space-y-6">
              <div className="flex justify-between items-center mb-4">
@@ -534,13 +641,11 @@ function SuperAdmin() {
           </div>
         )}
 
-        {/* SUB-VISTA: DETALLE DE USUARIO (Auditoría) */}
         {activeTab === 'directorio' && selectedUser && (
           <div className="space-y-6">
             <button onClick={() => setSelectedUser(null)} className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 hover:text-black mb-4"><ChevronRight className="rotate-180" size={16}/> Volver al Directorio</button>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Editar Perfil Base */}
               <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                 <h3 className="text-lg font-black uppercase italic mb-6">Perfil: @{selectedUser.username}</h3>
                 <form onSubmit={handleUpdateUserProfile} className="space-y-4">
@@ -548,9 +653,11 @@ function SuperAdmin() {
                   <div><label className="text-[10px] font-black uppercase text-slate-400">Ciudades</label><input type="text" className="w-full bg-slate-50 rounded-xl p-3 text-sm font-bold border-none" value={selectedUser.cities} onChange={e=>setSelectedUser({...selectedUser, cities: e.target.value})}/></div>
                   <button type="submit" className="w-full bg-blue-500 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest mt-4">Guardar Perfil</button>
                 </form>
+                <div className="pt-6 border-t border-slate-100 text-center mt-6">
+                  <button type="button" onClick={() => handleDeleteUser(selectedUser.username, selectedUser.uid)} className="text-red-500 text-[10px] font-black uppercase tracking-widest hover:text-red-600 transition-colors flex items-center justify-center gap-2 w-full"><Trash2 size={12}/> Borrar Influencer</button>
+                </div>
               </div>
 
-              {/* Auditar Campañas del Usuario */}
               <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-black uppercase italic">Sus Campañas Activas</h3>
@@ -576,7 +683,6 @@ function SuperAdmin() {
           </div>
         )}
 
-        {/* PESTAÑA 2: FINANZAS GLOBALES */}
         {activeTab === 'finanzas' && (
           <div className="space-y-8">
             <h2 className="text-2xl font-black uppercase italic mb-2">Platform Economics</h2>
@@ -590,7 +696,6 @@ function SuperAdmin() {
                <h3 className="text-lg font-black uppercase italic mb-2">Top Marcas en TopCodes</h3>
                <p className="text-xs font-bold text-slate-400 mb-8">Las marcas que más clics están recibiendo por tus influencers.</p>
                <div className="space-y-4">
-                 {/* Agrupar clics por marca para mostrar un mini ranking */}
                  {Object.entries(allPromos.reduce((acc, p) => {
                     const name = p.brandName.toUpperCase();
                     acc[name] = (acc[name] || 0) + (p.stats?.totalClicks || 0);
@@ -610,7 +715,6 @@ function SuperAdmin() {
           </div>
         )}
 
-        {/* PESTAÑA 3: GENERADOR DE PIXELES PARA MARCAS */}
         {activeTab === 'pixeles' && (
           <div className="space-y-8 max-w-4xl mx-auto">
              <div className="text-center mb-10">
@@ -628,7 +732,7 @@ function SuperAdmin() {
                   <pre className="text-[#d1ff64] font-mono text-xs overflow-x-auto pt-6 pb-2">
 {`<!-- TOPCODES CONVERSION PIXEL -->
 <script>
-  // Extrae el ID del influencer de la URL de compra (si guardaron la cookie)
+  // Extrae el ID del influencer de la URL de compra
   const urlParams = new URLSearchParams(window.location.search);
   const topcodesSubId = urlParams.get('subid') || 'UNKNOWN';
   
@@ -645,7 +749,7 @@ function SuperAdmin() {
                
                <div className="mt-8 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-4 items-start">
                   <AlertCircle className="text-blue-500 shrink-0 mt-0.5" size={20}/>
-                  <p className="text-xs font-bold text-blue-800 leading-relaxed">Nota de MVP: Este píxel es un mockup visual para tu estrategia B2B. En esta fase 1 del producto, toda la analítica de ventas se proyectará basada en clics (Camino A) para no requerir esfuerzo técnico de tus primeros clientes (marcas).</p>
+                  <p className="text-xs font-bold text-blue-800 leading-relaxed">Nota de MVP: Este píxel es un mockup visual para tu estrategia B2B. En esta fase 1 del producto, toda la analítica de ventas se proyectará basada en clics (Camino A).</p>
                </div>
              </div>
           </div>
