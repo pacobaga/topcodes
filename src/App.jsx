@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useParams, useNavigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
@@ -16,14 +16,13 @@ import {
   Settings, Users, Activity, BarChart3, Image as ImageIcon, Lock, 
   ChevronRight, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
   Youtube, Twitter, Music, Mail, Code, MessageCircle, X, Send,
-  Star, Timer, Bell, Crown, Clock
+  Star, Timer, Bell, Crown, Clock, CheckCircle2
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // ==========================================
 // 1. CONFIGURACIÓN FIREBASE 
 // ==========================================
-// ⚠️ RECUERDA PONER TUS LLAVES AQUÍ ANTES DE GUARDAR
 const firebaseConfig = {
   apiKey: "AIzaSyBwZyz9UqDCGY7wbO2B2cGPSAkqebx4iV4",
   authDomain: "top-codes-7208c.firebaseapp.com",
@@ -41,6 +40,18 @@ const storage = getStorage(app);
 const appId = 'topcodes-mvp-v1';
 
 const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología", "Lifestyle", "Viajes", "Fitness", "Gaming"];
+
+// ==========================================
+// 2. CONFIGURACIÓN DE MARCA (LOGO)
+// ==========================================
+const BRAND_LOGO_URL = ""; 
+
+const BrandLogo = ({ size = 32, className = "" }) => {
+  if (BRAND_LOGO_URL) {
+    return <img src={BRAND_LOGO_URL} alt="TopCodes Logo" style={{ width: size, height: size, objectFit: 'contain' }} className={className} />;
+  }
+  return <Zap size={size} className={className} />;
+};
 
 // ==========================================
 // COMPONENTE PRINCIPAL (ENRUTADOR)
@@ -70,7 +81,7 @@ export default function App() {
 
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
-    <Zap className="animate-pulse text-[#d1ff64] fill-black" size={50}/>
+    <BrandLogo size={50} className="animate-pulse text-[#d1ff64] fill-black" />
   </div>
 );
 
@@ -126,9 +137,8 @@ function LandingPage() {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
 
-  // 🟢 CÓDIGOS SECRETOS PARA GTM
-  const SECRET_CODE_FOUNDERS = 'FOUNDERS26'; // 1 Año Gratis (5 amigas)
-  const SECRET_CODE_BETA = 'BETA50'; // 1 Mes Gratis (Top 50 Waitlist)
+  const SECRET_CODE_FOUNDERS = 'FOUNDERS26'; 
+  const SECRET_CODE_BETA = 'BETA50'; 
   
   const isUnlockedFounders = inviteCode.trim().toUpperCase() === SECRET_CODE_FOUNDERS;
   const isUnlockedBeta = inviteCode.trim().toUpperCase() === SECRET_CODE_BETA;
@@ -139,20 +149,17 @@ function LandingPage() {
     setError(''); setMsg('');
     try {
       if (isLogin) {
-        // LÓGICA DE INICIO DE SESIÓN
         await signInWithEmailAndPassword(auth, email, password);
       } else {
         const cleanUser = igUser.replace('@', '').trim().toLowerCase();
         
         if (isUnlocked) {
-          // 1. REGISTRO REAL VIP
           const userCheck = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', cleanUser));
           if (userCheck.exists()) throw new Error("Este usuario de IG ya está registrado.");
 
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const uid = userCredential.user.uid;
           
-          // Etiquetamos el plan según el código usado para que lo veas en el Admin Panel
           const assignedPlan = isUnlockedFounders ? 'Founder (1 Año Gratis)' : 'Beta 50 (1 Mes Gratis)';
           
           const profileData = { 
@@ -164,7 +171,6 @@ function LandingPage() {
           await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'), profileData);
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', cleanUser), { uid, ...profileData });
         } else {
-          // 2. LISTA DE ESPERA (Público general - Buscando estar en los Top 50)
           await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'waitlist'), {
             instagram: cleanUser,
             email: email,
@@ -190,7 +196,10 @@ function LandingPage() {
       <div className="hidden lg:flex flex-col justify-center w-1/2 bg-black text-white p-24 relative">
         <div className="absolute top-0 right-0 p-10 opacity-10"><Crown size={400}/></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12"><Zap size={32} className="text-[#d1ff64] fill-current" /><span className="font-black text-3xl tracking-widest uppercase">TopCodes</span></div>
+          <div className="flex items-center gap-3 mb-12">
+             <BrandLogo size={32} className="text-[#d1ff64] fill-current" />
+             <span className="font-black text-3xl tracking-widest uppercase">TopCodes</span>
+          </div>
           <h1 className="text-6xl xl:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-8">La élite no paga <br/><span className="text-[#d1ff64]">comisiones.</span></h1>
           <p className="text-slate-400 text-xl max-w-lg leading-relaxed mb-6">
             Linktree te cobra el 12% por vender. Nosotros te cobramos <strong className="text-white">$99 MXN al mes. Punto.</strong>
@@ -204,7 +213,10 @@ function LandingPage() {
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
-          <div className="lg:hidden text-center mb-8"><Zap size={48} className="text-black fill-[#d1ff64] mx-auto mb-4" /><h1 className="text-4xl font-black uppercase tracking-tighter italic">TopCodes</h1></div>
+          <div className="lg:hidden text-center mb-8">
+             <BrandLogo size={48} className="text-black fill-[#d1ff64] mx-auto mb-4" />
+             <h1 className="text-4xl font-black uppercase tracking-tighter italic">TopCodes</h1>
+          </div>
           <div className="bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border border-slate-100">
             <div className="flex gap-6 mb-10 border-b border-slate-100">
               <button onClick={() => { setIsLogin(true); setError(''); setMsg(''); }} className={`pb-4 font-black uppercase tracking-widest text-xs transition-all ${isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300'}`}>Ingresar</button>
@@ -215,7 +227,6 @@ function LandingPage() {
             
             <form onSubmit={handleAuth} className="space-y-4">
               {isLogin ? (
-                // FORMULARIO DE LOGIN 
                 <>
                   <input type="email" placeholder="Correo Electrónico" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={email} onChange={e=>setEmail(e.target.value)}/>
                   <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={password} onChange={e=>setPassword(e.target.value)}/>
@@ -223,7 +234,6 @@ function LandingPage() {
                   <div className="mt-8 text-center"><button onClick={handleResetPassword} type="button" className="text-[10px] font-black uppercase text-slate-400 hover:text-black tracking-widest transition-colors">¿Olvidaste tu contraseña?</button></div>
                 </>
               ) : (
-                // FORMULARIO DE WAITLIST / REGISTRO SECRETO
                 <div className="space-y-4 animate-in fade-in">
                   <div className="bg-slate-900 p-4 rounded-2xl mb-6 border border-slate-800 relative overflow-hidden">
                      <div className="absolute top-0 right-0 p-2 opacity-10"><Zap size={60}/></div>
@@ -236,7 +246,6 @@ function LandingPage() {
                   
                   <input type="text" placeholder="Código de Invitación (Opcional)" className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-black uppercase transition-colors" value={inviteCode} onChange={e=>setInviteCode(e.target.value)}/>
 
-                  {/* CAMPOS SECRETOS (Solo aparecen si el código es correcto) */}
                   {isUnlocked && (
                     <div className="space-y-4 pt-4 border-t border-slate-100 animate-in slide-in-from-top-4">
                       <p className="text-[10px] font-black text-green-500 uppercase tracking-widest text-center flex items-center justify-center gap-1">
@@ -272,7 +281,6 @@ function DashboardLayout({ user }) {
   const [promotions, setPromotions] = useState([]);
   const [activeTab, setActiveTab] = useState('overview'); 
 
-  // 🟢 CONFIGURACIÓN DE WHATSAPP (SOPORTE B2B)
   const supportPhone = "525500000000"; 
 
   useEffect(() => {
@@ -292,10 +300,13 @@ function DashboardLayout({ user }) {
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans relative">
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col hidden lg:flex shrink-0 z-30 shadow-sm">
-        <div className="p-8 flex items-center gap-3"><div className="bg-black p-2 rounded-xl"><Zap size={20} className="text-[#d1ff64] fill-current" /></div><span className="font-black uppercase tracking-tighter text-xl italic">TopCodes</span></div>
+        <div className="p-8 flex items-center gap-3">
+           <div className="bg-black p-2 rounded-xl"><BrandLogo size={20} className="text-[#d1ff64] fill-current" /></div>
+           <span className="font-black uppercase tracking-tighter text-xl italic">TopCodes</span>
+        </div>
         <nav className="p-4 flex-grow space-y-1 mt-4">
           <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<LayoutDashboard size={18}/>} label="Overview" />
-          <NavItem active={activeTab === 'promos'} onClick={() => setActiveTab('promos')} icon={<Link2 size={18}/>} label="Promociones" />
+          <NavItem active={activeTab === 'promos'} onClick={() => setActiveTab('promos')} icon={<Link2 size={18}/>} label="Links & Deals" />
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
         </nav>
         <div className="p-6 border-t border-slate-100 space-y-2">
@@ -308,13 +319,13 @@ function DashboardLayout({ user }) {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200 shadow-sm z-20 relative">
-          <div className="flex items-center gap-2"><Zap size={24} className="text-black fill-[#d1ff64]" /><span className="font-black uppercase tracking-tighter italic">TopCodes</span></div>
+          <div className="flex items-center gap-2"><BrandLogo size={24} className="text-black fill-[#d1ff64]" /><span className="font-black uppercase tracking-tighter italic">TopCodes</span></div>
           <div className="flex gap-1 items-center bg-slate-50 p-1 rounded-2xl">
             <button onClick={() => setActiveTab('overview')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><LayoutDashboard size={18}/></button>
             <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
             <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
             <div className="w-px h-6 bg-slate-200 mx-1"></div>
-            <a href={waLink} target="_blank" rel="noopener noreferrer" className="p-2.5 text-green-500 hover:bg-green-50 rounded-xl" title="Soporte por WhatsApp"><MessageCircle size={18}/></a>
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="p-2.5 text-green-500 hover:bg-green-50 rounded-xl"><MessageCircle size={18}/></a>
             <button onClick={() => signOut(auth)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl"><LogOut size={18}/></button>
           </div>
         </div>
@@ -325,7 +336,6 @@ function DashboardLayout({ user }) {
           {activeTab === 'profile' && <TabProfile user={user} profile={profile} />}
         </div>
       </main>
-
       <SupportChatbot userName={profile.username} />
     </div>
   );
@@ -341,7 +351,7 @@ const NavItem = ({ active, icon, label, onClick }) => (
 function SupportChatbot({ userName }) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([{ text: `¡Hola @${userName}! Soy TopBot ⚡️ ¿En qué te puedo ayudar con tus campañas hoy?`, sender: 'bot' }]);
+  const [messages, setMessages] = useState([{ text: `¡Hola @${userName}! Soy TopBot ⚡️ ¿En qué te puedo ayudar hoy?`, sender: 'bot' }]);
 
   const handleSend = (e) => {
     e.preventDefault(); if (!input.trim()) return;
@@ -349,10 +359,6 @@ function SupportChatbot({ userName }) {
     setMessages(prev => [...prev, newMsg]); setInput('');
     setTimeout(() => {
       let botReply = "He guardado tu mensaje. Si es urgente, haz clic en el botón de WhatsApp del menú para hablar con el equipo.";
-      const lowerInput = input.toLowerCase();
-      if (lowerInput.includes('hola') || lowerInput.includes('buenas')) botReply = "¡Hola! Recuerda que el botón de WhatsApp está disponible en tu menú.";
-      else if (lowerInput.includes('pago') || lowerInput.includes('dinero') || lowerInput.includes('comision')) botReply = "TopCodes proyecta tus ventas, pero los pagos reales te los hace directamente la marca. Nosotros te damos los datos para auditar.";
-      else if (lowerInput.includes('marca') || lowerInput.includes('logo')) botReply = "Extraemos los logos automáticamente. Si quieres subir uno, ve a 'Promociones' y edita la campaña.";
       setMessages(prev => [...prev, { text: botReply, sender: 'bot' }]);
     }, 1000);
   };
@@ -362,21 +368,9 @@ function SupportChatbot({ userName }) {
       <button onClick={() => setIsOpen(true)} className={`fixed bottom-6 right-6 w-16 h-16 bg-black text-[#d1ff64] rounded-[1.5rem] shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-[100] border-2 border-[#d1ff64] ${isOpen ? 'hidden' : 'flex'}`}><MessageCircle size={28} /></button>
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-80 sm:w-96 bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-[100] animate-in slide-in-from-bottom-10">
-          <div className="bg-black p-5 flex justify-between items-center text-white">
-            <div className="flex items-center gap-3"><div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-[#d1ff64]"><Zap size={20}/></div><div><span className="font-black text-sm uppercase tracking-widest italic block leading-tight">TopBot</span><span className="text-[9px] text-[#d1ff64] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#d1ff64] rounded-full animate-pulse"></span> En línea</span></div></div>
-            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-xl"><X size={18}/></button>
-          </div>
-          <div className="flex-1 p-5 overflow-y-auto h-80 space-y-4 bg-slate-50 flex flex-col">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 text-xs font-bold leading-relaxed shadow-sm ${msg.sender === 'user' ? 'bg-[#d1ff64] text-black rounded-[1.5rem] rounded-br-md' : 'bg-white border border-slate-200 text-slate-700 rounded-[1.5rem] rounded-bl-md'}`}>{msg.text}</div>
-              </div>
-            ))}
-          </div>
-          <form onSubmit={handleSend} className="p-4 bg-white border-t border-slate-100 flex gap-2">
-            <input type="text" placeholder="Escribe tu duda..." className="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-3 text-xs font-bold outline-none" value={input} onChange={(e) => setInput(e.target.value)}/>
-            <button type="submit" className="w-12 h-12 bg-black text-[#d1ff64] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shrink-0 outline-none shadow-md"><Send size={18}/></button>
-          </form>
+          <div className="bg-black p-5 flex justify-between items-center text-white"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-[#d1ff64]"><BrandLogo size={20}/></div><div><span className="font-black text-sm uppercase tracking-widest italic block leading-tight">TopBot</span><span className="text-[9px] text-[#d1ff64] font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#d1ff64] rounded-full animate-pulse"></span> En línea</span></div></div><button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-xl"><X size={18}/></button></div>
+          <div className="flex-1 p-5 overflow-y-auto h-80 space-y-4 bg-slate-50 flex flex-col">{messages.map((msg, idx) => (<div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] p-4 text-xs font-bold leading-relaxed shadow-sm ${msg.sender === 'user' ? 'bg-[#d1ff64] text-black rounded-[1.5rem] rounded-br-md' : 'bg-white border border-slate-200 text-slate-700 rounded-[1.5rem] rounded-bl-md'}`}>{msg.text}</div></div>))}</div>
+          <form onSubmit={handleSend} className="p-4 bg-white border-t border-slate-100 flex gap-2"><input type="text" placeholder="Escribe tu duda..." className="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-3 text-xs font-bold outline-none" value={input} onChange={(e) => setInput(e.target.value)}/><button type="submit" className="w-12 h-12 bg-black text-[#d1ff64] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shrink-0 outline-none shadow-md"><Send size={18}/></button></form>
         </div>
       )}
     </>
@@ -395,10 +389,13 @@ function TabOverview({ profile, promotions, spotUrl }) {
 
     activePromos.forEach(promo => {
       const clicks = promo.stats?.totalClicks || 0; totalClics += clicks;
-      const conversions = clicks * 0.03; const val = parseFloat(promo.commissionValue) || 0;
-      if (promo.commissionType === '$') { totalProjValue += conversions * val; hasMoney = true; isPointsOnly = false; } 
-      else if (promo.commissionType === '%') { totalProjValue += conversions * (500 * (val / 100)); hasMoney = true; isPointsOnly = false; } 
-      else if (promo.commissionType === 'puntos') { totalProjValue += conversions * val; if (!hasMoney) isPointsOnly = true; }
+      // Solo proyectamos ganancias si es un DEAL (no si es link normal)
+      if(promo.type !== 'link') {
+        const conversions = clicks * 0.03; const val = parseFloat(promo.commissionValue) || 0;
+        if (promo.commissionType === '$') { totalProjValue += conversions * val; hasMoney = true; isPointsOnly = false; } 
+        else if (promo.commissionType === '%') { totalProjValue += conversions * (500 * (val / 100)); hasMoney = true; isPointsOnly = false; } 
+        else if (promo.commissionType === 'puntos') { totalProjValue += conversions * val; if (!hasMoney) isPointsOnly = true; }
+      }
     });
 
     const projPrefix = hasMoney || (!isPointsOnly && totalProjValue > 0) ? '$' : '';
@@ -419,7 +416,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div><h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic mb-2">Panel de Control</h1><p className="text-slate-500 font-bold">Gestiona tu marca personal y proyecta tus ganancias.</p></div>
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center"><select className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-600 outline-none px-4 py-2 cursor-pointer appearance-none" value={selectedPromo} onChange={(e) => setSelectedPromo(e.target.value)}><option value="all">Todas las Campañas (Total)</option>{promotions.map(p => <option key={p.id} value={p.id}>{p.brandName} ({p.discount})</option>)}</select></div>
+          <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center"><select className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-600 outline-none px-4 py-2 cursor-pointer appearance-none" value={selectedPromo} onChange={(e) => setSelectedPromo(e.target.value)}><option value="all">Todas las Campañas (Total)</option>{promotions.map(p => <option key={p.id} value={p.id}>{p.brandName} {p.type === 'link' ? '(Link)' : '(Deal)'}</option>)}</select></div>
           <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm">
             <div className="px-4 hidden sm:block"><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Link de tu Spot</p><p className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{spotUrl}</p></div>
             <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')} title="Ver mi Spot público"><Eye size={16} className="text-slate-600"/></button>
@@ -439,7 +436,12 @@ function TabOverview({ profile, promotions, spotUrl }) {
 }
 
 function TabPromotions({ user, profile, promotions }) {
-  const [newPromo, setNewPromo] = useState({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' });
+  // ESTADO MODIFICADO: Agregamos "type" (deal o link)
+  const [newPromo, setNewPromo] = useState({ 
+    type: 'deal', // 'deal' o 'link'
+    brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', 
+    niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' 
+  });
   const [editingId, setEditingId] = useState(null); 
   const [msg, setMsg] = useState(''); const [loading, setLoading] = useState(false);
 
@@ -456,13 +458,19 @@ function TabPromotions({ user, profile, promotions }) {
       const urlObj = new URL(newPromo.originalUrl);
       urlObj.searchParams.set('utm_source', 'topcodes'); urlObj.searchParams.set('subid', profile.username);
       trackedUrl = urlObj.toString();
-    } catch (e) { setLoading(false); return alert("Ingresa una URL de Afiliado válida."); }
+    } catch (e) { setLoading(false); return alert("Ingresa una URL válida que empiece con https://"); }
 
     try {
-      const promoData = { ...newPromo, brandDomain: newPromo.brandDomain || '', commissionType: newPromo.commissionType || '%', commissionValue: newPromo.commissionValue || '', trackedUrl, logoUrl: previewLogoUrl };
+      const promoData = { 
+        ...newPromo, 
+        brandDomain: newPromo.brandDomain || '', 
+        commissionType: newPromo.commissionType || '%', 
+        commissionValue: newPromo.commissionValue || '', 
+        trackedUrl, 
+        logoUrl: previewLogoUrl 
+      };
       
-      // Si esta es hero, quitamos hero a las demás para que solo haya 1 (Lógica rápida MVP)
-      if (promoData.isHero) {
+      if (promoData.isHero && promoData.type === 'deal') {
          promotions.forEach(async (p) => {
             if(p.isHero && p.id !== editingId) {
                await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', p.id), { isHero: false });
@@ -474,21 +482,21 @@ function TabPromotions({ user, profile, promotions }) {
       if (editingId) {
         await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', editingId), promoData);
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', editingId), { ownerId: user.uid, username: profile.username, ...promoData }, { merge: true });
-        setMsg('✅ Deal actualizado');
+        setMsg('✅ Elemento actualizado');
       } else {
         promoData.stats = { totalClicks: 0 }; promoData.createdAt = new Date().toISOString();
         const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'promotions'), promoData);
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), { ownerId: user.uid, username: profile.username, ...promoData });
-        setMsg('✅ Deal publicado');
+        setMsg('✅ Elemento publicado');
       }
-      setNewPromo({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' }); setEditingId(null);
+      setNewPromo({ type: 'deal', brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' }); setEditingId(null);
       setTimeout(() => setMsg(''), 3000);
     } catch (error) { setMsg(`❌ Error: ${error.message}`); }
     setLoading(false);
   };
 
   const handleDelete = async (promoId) => {
-    if(!window.confirm('¿Eliminar promoción?')) return;
+    if(!window.confirm('¿Eliminar elemento?')) return;
     await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', promoId));
     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', promoId));
   };
@@ -497,54 +505,102 @@ function TabPromotions({ user, profile, promotions }) {
     <div className="flex flex-col xl:flex-row gap-12 animate-in fade-in duration-700">
       <div className="flex-1 space-y-10">
         <div className={`bg-white p-8 rounded-[2.5rem] shadow-sm border ${editingId ? 'border-black' : 'border-slate-100'} transition-all`}>
-          <div className="flex justify-between mb-8"><h3 className="text-lg font-black uppercase italic flex items-center gap-3">{editingId ? <Settings size={20} className="text-[#8b5cf6]"/> : <Plus size={20}/>} {editingId ? 'Editar Deal' : 'Nuevo Link'}</h3>{editingId && <button onClick={()=>{setNewPromo({ brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' }); setEditingId(null);}} className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500">Cancelar</button>}</div>
+          <div className="flex justify-between items-center mb-8">
+             <h3 className="text-lg font-black uppercase italic flex items-center gap-3">
+               {editingId ? <Settings size={20} className="text-[#8b5cf6]"/> : <Plus size={20}/>} 
+               {editingId ? 'Editar Elemento' : 'Nuevo Elemento'}
+             </h3>
+             {editingId && <button onClick={()=>{setNewPromo({ type: 'deal', brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' }); setEditingId(null);}} className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500">Cancelar</button>}
+          </div>
+
+          {!editingId && (
+            <div className="flex gap-4 mb-8 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+              <button type="button" onClick={() => setNewPromo({...newPromo, type: 'deal'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newPromo.type === 'deal' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400 hover:text-black'}`}>💰 Deal (Descuento)</button>
+              <button type="button" onClick={() => setNewPromo({...newPromo, type: 'link'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newPromo.type === 'link' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>🔗 Link Normal</button>
+            </div>
+          )}
+
           <form onSubmit={handleSave} className="space-y-6">
             
-            {/* NUEVA SECCIÓN FOMO / HERO */}
-            <div className="p-5 bg-[#faffea] rounded-2xl border border-[#d1ff64] shadow-sm space-y-4">
-               <div className="flex items-center gap-3">
-                 <label className="flex items-center gap-3 cursor-pointer">
-                   <input type="checkbox" className="w-5 h-5 accent-black cursor-pointer" checked={newPromo.isHero} onChange={(e) => setNewPromo({...newPromo, isHero: e.target.checked})} />
-                   <span className="font-black uppercase text-sm flex items-center gap-2"><Star size={16} className="text-yellow-500 fill-current"/> Destacar como Deal Principal (Genera Escasez)</span>
-                 </label>
-               </div>
-               {newPromo.isHero && (
-                 <div className="pl-8 border-l-2 border-[#d1ff64] ml-2 animate-in slide-in-from-top-2">
-                   <label className="text-[10px] font-black uppercase text-slate-500 mb-2 block flex items-center gap-1"><Timer size={12}/> Fecha límite (Cuenta Regresiva Pública)</label>
-                   <input type="datetime-local" className="bg-white border-none rounded-xl p-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-black" value={newPromo.expiresAt} onChange={(e) => setNewPromo({...newPromo, expiresAt: e.target.value})} />
+            {newPromo.type === 'deal' && (
+              <div className="p-5 bg-[#faffea] rounded-2xl border border-[#d1ff64] shadow-sm space-y-4 animate-in fade-in">
+                 <div className="flex items-center gap-3">
+                   <label className="flex items-center gap-3 cursor-pointer">
+                     <input type="checkbox" className="w-5 h-5 accent-black cursor-pointer" checked={newPromo.isHero} onChange={(e) => setNewPromo({...newPromo, isHero: e.target.checked})} />
+                     <span className="font-black uppercase text-sm flex items-center gap-2"><Star size={16} className="text-yellow-500 fill-current"/> Destacar como Deal Principal (Genera Escasez)</span>
+                   </label>
                  </div>
-               )}
-            </div>
+                 {newPromo.isHero && (
+                   <div className="pl-8 border-l-2 border-[#d1ff64] ml-2 animate-in slide-in-from-top-2">
+                     <label className="text-[10px] font-black uppercase text-slate-500 mb-2 block flex items-center gap-1"><Timer size={12}/> Fecha límite (Cuenta Regresiva Pública)</label>
+                     <input type="datetime-local" className="bg-white border-none rounded-xl p-3 text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-black" value={newPromo.expiresAt} onChange={(e) => setNewPromo({...newPromo, expiresAt: e.target.value})} />
+                   </div>
+                 )}
+              </div>
+            )}
 
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-              <div className="flex items-center gap-4"><div className="w-16 h-16 bg-white rounded-full flex items-center justify-center relative overflow-hidden">{previewLogoUrl ? <img key={previewLogoUrl} src={previewLogoUrl} className="w-full h-full object-cover p-2 relative z-10" /> : null}<span className="absolute inset-0 flex items-center justify-center font-black text-slate-300 text-xl">{newPromo.brandName ? newPromo.brandName[0].toUpperCase() : <ImageIcon size={24}/>}</span></div><div><p className="text-xs font-black uppercase text-black mb-1">Logo Inteligente</p><p className="text-[10px] font-bold text-slate-400">Escribe la web de la marca.</p></div></div>
-              <div className="grid grid-cols-3 gap-4"><input type="text" placeholder="Marca" required className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.brandName} onChange={e => setNewPromo({...newPromo, brandName: e.target.value})}/><input type="text" placeholder="Web (ej. nike.com)" className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.brandDomain} onChange={e => setNewPromo({...newPromo, brandDomain: e.target.value})}/><select required className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}><option value="" disabled>Nicho</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center relative overflow-hidden">
+                  {previewLogoUrl ? <img key={previewLogoUrl} src={previewLogoUrl} className="w-full h-full object-cover p-2 relative z-10" /> : null}
+                  <span className="absolute inset-0 flex items-center justify-center font-black text-slate-300 text-xl">{newPromo.brandName ? newPromo.brandName[0].toUpperCase() : <ImageIcon size={24}/>}</span>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase text-black mb-1">Ícono Inteligente</p>
+                  <p className="text-[10px] font-bold text-slate-400">Extraemos el logo de la web que pongas.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input type="text" placeholder={newPromo.type === 'deal' ? "Marca (Ej. Sephora)" : "Título del Link (Ej. Escucha mi Podcast)"} required className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.brandName} onChange={e => setNewPromo({...newPromo, brandName: e.target.value})}/>
+                <input type="text" placeholder="Web base para logo (Ej. spotify.com)" className="w-full bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.brandDomain} onChange={e => setNewPromo({...newPromo, brandDomain: e.target.value})}/>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4"><input type="text" placeholder="Oferta (20% OFF)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold" value={newPromo.discount} onChange={e => setNewPromo({...newPromo, discount: e.target.value})}/><input type="text" placeholder="Código (Opcional)" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold" value={newPromo.code} onChange={e => setNewPromo({...newPromo, code: e.target.value})}/></div>
-            <input type="url" placeholder="Link de Afiliado Directo" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold" value={newPromo.originalUrl} onChange={e => setNewPromo({...newPromo, originalUrl: e.target.value})}/>
-            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100"><label className="text-[10px] font-black uppercase text-slate-400 mb-3 block">Comisión acordada</label><div className="flex gap-4"><select className="w-1/3 bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.commissionType} onChange={e=>setNewPromo({...newPromo, commissionType: e.target.value})}><option value="%">Porcentaje (%)</option><option value="$">Monto Fijo ($)</option><option value="puntos">Puntos</option></select><input type="number" placeholder="Valor (ej. 15)" required className="w-2/3 bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.commissionValue} onChange={e=>setNewPromo({...newPromo, commissionValue: e.target.value})}/></div></div>
-            <button type="submit" disabled={loading} className={`w-full ${editingId ? 'bg-[#8b5cf6] text-white' : 'bg-black text-[#d1ff64]'} py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-50 hover:scale-[1.01] transition-transform`}>{loading ? 'Guardando...' : (editingId ? 'Actualizar Deal' : 'Publicar Deal')}</button>
+
+            <input type="url" placeholder={newPromo.type === 'deal' ? "Link de Afiliado Directo (https://...)" : "URL Destino (https://...)"} required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold" value={newPromo.originalUrl} onChange={e => setNewPromo({...newPromo, originalUrl: e.target.value})}/>
+
+            {newPromo.type === 'deal' && (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="grid grid-cols-2 gap-4">
+                  <input type="text" placeholder="Oferta (20% OFF)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold" value={newPromo.discount} onChange={e => setNewPromo({...newPromo, discount: e.target.value})}/>
+                  <input type="text" placeholder="Código (Opcional)" className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold" value={newPromo.code} onChange={e => setNewPromo({...newPromo, code: e.target.value})}/>
+                </div>
+                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                  <label className="text-[10px] font-black uppercase text-slate-400 mb-3 block">Métricas de Comisión (Para Proyección Interna)</label>
+                  <div className="flex gap-4">
+                    <select className="w-1/3 bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.commissionType} onChange={e=>setNewPromo({...newPromo, commissionType: e.target.value})}><option value="%">Porcentaje (%)</option><option value="$">Monto Fijo ($)</option><option value="puntos">Puntos</option></select>
+                    <input type="number" placeholder="Valor (ej. 15)" required className="w-2/3 bg-white border-none rounded-xl p-4 text-sm font-bold" value={newPromo.commissionValue} onChange={e=>setNewPromo({...newPromo, commissionValue: e.target.value})}/>
+                  </div>
+                </div>
+                <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold" value={newPromo.niche} onChange={e=>setNewPromo({...newPromo, niche: e.target.value})}><option value="" disabled>Selecciona un Nicho</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className={`w-full ${editingId ? 'bg-[#8b5cf6] text-white' : (newPromo.type==='deal' ? 'bg-black text-[#d1ff64]' : 'bg-black text-white')} py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-50 hover:scale-[1.01] transition-transform`}>
+              {loading ? 'Guardando...' : (editingId ? 'Actualizar' : `Publicar ${newPromo.type === 'deal' ? 'Deal' : 'Link'}`)}
+            </button>
             {msg && <div className="text-center text-xs font-bold text-green-600 mt-2">{msg}</div>}
           </form>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           {promotions.map(promo => (
-            <div key={promo.id} className={`bg-white p-6 rounded-[2rem] border shadow-sm flex items-center justify-between group ${promo.isHero ? 'border-yellow-400 bg-yellow-50/10' : 'border-slate-100'}`}>
+            <div key={promo.id} className={`bg-white p-6 rounded-[2rem] border shadow-sm flex items-center justify-between group ${promo.isHero ? 'border-yellow-400 bg-yellow-50/10' : 'border-slate-100'} ${promo.type === 'link' ? 'bg-slate-50' : ''}`}>
               <div className="flex items-center gap-3">
-                 <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-sm relative overflow-hidden shrink-0">
+                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-sm relative overflow-hidden shrink-0 border border-slate-100">
                     {promo.logoUrl ? <img key={promo.logoUrl} src={promo.logoUrl} className="w-full h-full object-cover p-2 relative z-10"/> : null}
                     <span className="absolute inset-0 flex items-center justify-center text-slate-400">{promo.brandName ? promo.brandName[0].toUpperCase() : '?'}</span>
                  </div>
                  <div>
                     <h4 className="font-black text-sm leading-none mb-1 flex items-center gap-1">{promo.brandName} {promo.isHero && <Star size={12} className="text-yellow-500 fill-current"/>}</h4>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{promo.discount}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                      {promo.type === 'link' ? <span className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded">LINK</span> : promo.discount}
+                    </p>
                  </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-center"><p className="text-xl font-black leading-none">{promo.stats?.totalClicks || 0}</p><p className="text-[8px] font-black text-slate-300 uppercase">Clics</p></div>
                 <div className="flex flex-col gap-1">
-                  <button onClick={() => {setNewPromo({ brandName: promo.brandName||'', brandDomain: promo.brandDomain||'', discount: promo.discount||'', code: promo.code||'', originalUrl: promo.originalUrl||'', niche: promo.niche||'', commissionType: promo.commissionType||'%', commissionValue: promo.commissionValue||'', isHero: promo.isHero||false, expiresAt: promo.expiresAt||'' }); setEditingId(promo.id); window.scrollTo({top:0, behavior:'smooth'});}} className="p-2 text-slate-300 hover:text-[#8b5cf6] bg-slate-50 rounded-lg"><Settings size={14}/></button>
+                  <button onClick={() => {setNewPromo({ type: promo.type||'deal', brandName: promo.brandName||'', brandDomain: promo.brandDomain||'', discount: promo.discount||'', code: promo.code||'', originalUrl: promo.originalUrl||'', niche: promo.niche||'', commissionType: promo.commissionType||'%', commissionValue: promo.commissionValue||'', isHero: promo.isHero||false, expiresAt: promo.expiresAt||'' }); setEditingId(promo.id); window.scrollTo({top:0, behavior:'smooth'});}} className="p-2 text-slate-300 hover:text-[#8b5cf6] bg-slate-50 rounded-lg"><Settings size={14}/></button>
                   <button onClick={() => handleDelete(promo.id)} className="p-2 text-slate-300 hover:text-red-500 bg-slate-50 rounded-lg"><Trash2 size={14}/></button>
                 </div>
               </div>
@@ -552,7 +608,6 @@ function TabPromotions({ user, profile, promotions }) {
           ))}
         </div>
       </div>
-      <div className="hidden xl:flex flex-col items-center w-[380px] shrink-0 sticky top-10 h-[750px] opacity-50"><p className="text-xs font-bold text-center mt-40">Preview Oculto para espacio de código</p></div>
     </div>
   );
 }
@@ -601,7 +656,7 @@ function TabProfile({ user, profile }) {
           <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2"><ImageIcon size={14}/> Foto de Perfil</label>
           <div className="flex items-center gap-6"><div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">{formData.photoUrl ? <img src={formData.photoUrl} className="w-full h-full object-cover" /> : <User size={40} className="text-slate-300" />}</div><label className={`cursor-pointer bg-black text-[#d1ff64] px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg ${uploading ? 'opacity-50' : ''}`}>{uploading ? 'Subiendo...' : 'Subir Foto'}<input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} /></label></div>
         </div>
-        <textarea rows="4" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none resize-none focus:ring-2 focus:ring-[#d1ff64]" placeholder="Biografía" value={formData.bio} onChange={e=>setFormData({...formData, bio: e.target.value})}></textarea>
+        <textarea rows="4" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none resize-none focus:ring-2 focus:ring-[#d1ff64]" placeholder="Biografía corta" value={formData.bio} onChange={e=>setFormData({...formData, bio: e.target.value})}></textarea>
         <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.01] transition-transform">Guardar Cambios</button>
       </form>
     </div>
@@ -635,8 +690,10 @@ function SuperAdmin() {
     usersData.forEach(u => tViews += (u.views || 0));
     promosData.forEach(p => {
       const clics = p.stats?.totalClicks || 0; tClicks += clics;
-      if (p.commissionType === '$' && p.commissionValue) { tMoney += (clics * 0.02 * parseFloat(p.commissionValue)); }
-      else if (p.commissionType === '%' && p.commissionValue) { tMoney += (clics * 0.02 * (500 * (parseFloat(p.commissionValue)/100))); }
+      if (p.type !== 'link') {
+        if (p.commissionType === '$' && p.commissionValue) { tMoney += (clics * 0.02 * parseFloat(p.commissionValue)); }
+        else if (p.commissionType === '%' && p.commissionValue) { tMoney += (clics * 0.02 * (500 * (parseFloat(p.commissionValue)/100))); }
+      }
     });
     setGlobalStats({ users: usersData.length, views: tViews, clicks: tClicks, projRevenue: tMoney });
   };
@@ -656,7 +713,7 @@ function SuperAdmin() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-40"><div className="flex items-center gap-4"><Zap size={24} className="text-black fill-[#d1ff64]"/><h1 className="text-2xl font-black uppercase italic tracking-tighter">B2B Console</h1></div><div className="flex bg-slate-100 p-1 rounded-2xl"><button onClick={()=>setActiveTab('directorio')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='directorio'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Directorio</button><button onClick={()=>setActiveTab('finanzas')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='finanzas'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Finanzas</button></div><Link to="/" className="text-xs font-black text-slate-400 hover:text-black uppercase tracking-widest">Salir App</Link></nav>
+      <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-40"><div className="flex items-center gap-4"><BrandLogo size={24} className="text-black fill-[#d1ff64]"/><h1 className="text-2xl font-black uppercase italic tracking-tighter">B2B Console</h1></div><div className="flex bg-slate-100 p-1 rounded-2xl"><button onClick={()=>setActiveTab('directorio')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='directorio'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Directorio</button><button onClick={()=>setActiveTab('finanzas')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='finanzas'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Finanzas</button></div><Link to="/" className="text-xs font-black text-slate-400 hover:text-black uppercase tracking-widest">Salir App</Link></nav>
       <main className="flex-1 max-w-7xl w-full mx-auto p-8 animate-in fade-in duration-500">
         {activeTab === 'directorio' && !selectedUser && (
           <div className="space-y-6">
@@ -702,7 +759,7 @@ function SuperAdmin() {
             <button onClick={() => setSelectedUser(null)} className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 hover:text-black mb-4"><ChevronRight className="rotate-180" size={16}/> Volver</button>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><h3 className="text-lg font-black uppercase italic mb-6">Perfil: @{selectedUser.username}</h3><form onSubmit={handleUpdateUserProfile} className="space-y-4"><div><label className="text-[10px] font-black uppercase text-slate-400">Nicho</label><input type="text" className="w-full bg-slate-50 rounded-xl p-3 text-sm font-bold border-none" value={selectedUser.category} onChange={e=>setSelectedUser({...selectedUser, category: e.target.value})}/></div><button type="submit" className="w-full bg-blue-500 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest mt-4">Guardar</button></form></div>
-              <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><h3 className="text-lg font-black uppercase italic mb-6">Campañas Activas</h3><div className="space-y-3">{allPromos.filter(p => p.ownerId === selectedUser.uid).map(promo => (<div key={promo.id} className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100"><div className="flex items-center gap-4"><div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden">{promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover p-1"/> : <span className="font-black text-xs">{promo.brandName[0]}</span>}</div><div><p className="font-black text-sm">{promo.brandName} {promo.isHero && <Star size={10} className="inline text-yellow-500 fill-current"/>}</p><p className="text-[9px] font-bold uppercase text-slate-400">{promo.discount} | Clics: {promo.stats?.totalClicks || 0}</p></div></div><a href={promo.trackedUrl} target="_blank" className="p-2 text-slate-400 hover:text-blue-500 bg-white rounded-lg shadow-sm"><ExternalLink size={14}/></a></div>))}</div></div>
+              <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><h3 className="text-lg font-black uppercase italic mb-6">Contenido Activo</h3><div className="space-y-3">{allPromos.filter(p => p.ownerId === selectedUser.uid).map(promo => (<div key={promo.id} className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100"><div className="flex items-center gap-4"><div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden border border-slate-100">{promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover p-1"/> : <span className="font-black text-xs">{promo.brandName[0]}</span>}</div><div><p className="font-black text-sm">{promo.brandName} {promo.isHero && <Star size={10} className="inline text-yellow-500 fill-current"/>}</p><p className="text-[9px] font-bold uppercase text-slate-400">{promo.type === 'link' ? '🔗 LINK' : `💰 ${promo.discount}`} | Clics: {promo.stats?.totalClicks || 0}</p></div></div><a href={promo.trackedUrl} target="_blank" className="p-2 text-slate-400 hover:text-blue-500 bg-white rounded-lg shadow-sm"><ExternalLink size={14}/></a></div>))}</div></div>
             </div>
           </div>
         )}
@@ -715,7 +772,8 @@ function SuperAdmin() {
 }
 
 // ==========================================
-// VISTA: THE SPOT PÚBLICO (NUEVO DISEÑO CON HERO DEAL & CAPTURA DE LEADS)
+// VISTA: THE SPOT PÚBLICO 
+// (NUEVA DUALIDAD: DEALS VS LINKS PERSONALES)
 // ==========================================
 function PublicSpot() {
   const { username } = useParams();
@@ -723,7 +781,6 @@ function PublicSpot() {
   const [promotions, setPromotions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Lead Capture State
   const [vipEmail, setVipEmail] = useState('');
   const [leadMsg, setLeadMsg] = useState('');
 
@@ -745,7 +802,7 @@ function PublicSpot() {
   }, [username]);
 
   const handleClick = async (promo) => {
-    if (promo.code) {
+    if (promo.code && promo.type !== 'link') {
       const el = document.createElement('textarea'); el.value = promo.code; document.body.appendChild(el);
       el.select(); document.execCommand('copy'); document.body.removeChild(el);
     }
@@ -759,7 +816,7 @@ function PublicSpot() {
     if(!vipEmail) return;
     try {
       await addDoc(collection(db, 'artifacts', appId, 'users', publicProfile.uid, 'leads'), { email: vipEmail, timestamp: new Date().toISOString() });
-      setLeadMsg('¡Gracias! Te avisaremos de nuevos códigos.');
+      setLeadMsg('¡Gracias! Te avisaremos pronto.');
       setVipEmail('');
       setTimeout(() => setLeadMsg(''), 4000);
     } catch (err) { setLeadMsg('Error al unirse.'); }
@@ -767,20 +824,22 @@ function PublicSpot() {
 
   if (!publicProfile) return <LoadingScreen />;
 
-  // Filtrar el "Hero Deal" (Deal Estrella)
-  const heroDeal = promotions.find(p => p.isHero);
-  const regularDeals = promotions.filter(p => !p.isHero && p.brandName.toLowerCase().includes(searchTerm.toLowerCase()));
+  // 🟢 FILTROS INTELIGENTES PARA LA VISTA PÚBLICA
+  const heroDeal = promotions.find(p => p.isHero && p.type !== 'link');
+  const regularDeals = promotions.filter(p => !p.isHero && p.type !== 'link' && p.brandName.toLowerCase().includes(searchTerm.toLowerCase()));
+  const standardLinks = promotions.filter(p => p.type === 'link' && p.brandName.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] font-sans pb-20 p-6 relative">
       <div className="max-w-5xl mx-auto animate-in slide-in-from-bottom-8 duration-1000 relative z-10">
+        
+        {/* HEADER PERFIL */}
         <header className="text-center mb-10 mt-10">
           <div className="w-32 h-32 md:w-40 md:h-40 bg-white p-2 rounded-[3.5rem] shadow-2xl mx-auto mb-6 border border-slate-100 overflow-hidden flex items-center justify-center bg-slate-50 transition-transform hover:scale-105">
             {publicProfile.photoUrl ? <img src={publicProfile.photoUrl} className="w-full h-full object-cover" /> : <User size={50} className="text-slate-200" />}
           </div>
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">@{publicProfile.username}</h2>
           <p className="text-sm md:text-base font-bold text-slate-400 mt-4 max-w-lg mx-auto italic">{publicProfile.bio}</p>
-          
           <div className="flex justify-center gap-3 mt-6">
             <a href={`https://instagram.com/${publicProfile.username}`} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-pink-600"><Instagram size={20} /></a>
             {publicProfile.tiktokUrl && <a href={publicProfile.tiktokUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-black"><Music size={20} /></a>}
@@ -788,12 +847,12 @@ function PublicSpot() {
           </div>
         </header>
 
-        {/* ECOSISTEMA B2B: CAPTURA DE LEADS (VIP LIST) */}
+        {/* ECOSISTEMA B2B: CAPTURA DE LEADS */}
         <div className="max-w-2xl mx-auto mb-10">
           <div className="bg-black text-white p-6 rounded-[2.5rem] shadow-2xl border border-slate-800 text-center relative overflow-hidden">
              <div className="absolute top-0 right-0 p-4 opacity-20"><Bell size={80}/></div>
              <h3 className="text-sm font-black uppercase tracking-widest text-[#d1ff64] mb-2 relative z-10 flex items-center justify-center gap-2"><Star size={16} className="fill-current"/> VIP List</h3>
-             <p className="text-xs font-bold text-slate-300 mb-4 relative z-10">Déjame tu correo y sé el primero en recibir mis códigos de descuento exclusivos antes de que se agoten en Stories.</p>
+             <p className="text-xs font-bold text-slate-300 mb-4 relative z-10">Déjame tu correo y sé el primero en recibir mis códigos de descuento antes de que se agoten en Stories.</p>
              {leadMsg ? (
                 <div className="bg-[#d1ff64] text-black py-3 rounded-2xl text-xs font-black uppercase tracking-widest animate-in zoom-in">{leadMsg}</div>
              ) : (
@@ -805,7 +864,7 @@ function PublicSpot() {
           </div>
         </div>
 
-        {/* ANTI-FATIGA DE DECISIÓN: EL HERO DEAL (DESTACADO) */}
+        {/* ANTI-FATIGA DE DECISIÓN: EL HERO DEAL */}
         {heroDeal && (!searchTerm || heroDeal.brandName.toLowerCase().includes(searchTerm.toLowerCase())) && (
           <div className="max-w-2xl mx-auto mb-12">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4 text-center">Top Deal del Día</h3>
@@ -824,30 +883,59 @@ function PublicSpot() {
           </div>
         )}
 
+        {/* BUSCADOR */}
         <div className="relative mb-8 max-w-2xl mx-auto">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
-          <input type="text" placeholder="Buscar marcas o descuentos..." className="w-full bg-white border-none rounded-[2rem] py-5 pl-16 pr-6 shadow-sm font-bold text-base outline-none focus:ring-2 focus:ring-black transition-all" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
+          <input type="text" placeholder="Buscar marcas, códigos o enlaces..." className="w-full bg-white border-none rounded-[2rem] py-5 pl-16 pr-6 shadow-sm font-bold text-base outline-none focus:ring-2 focus:ring-black transition-all" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {regularDeals.map(promo => (
-            <button key={promo.id} onClick={()=>handleClick(promo)} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-64 text-left hover:border-black hover:shadow-xl transition-all group overflow-hidden relative">
-              <div className="absolute -top-4 -right-4 opacity-[0.02] text-black group-hover:opacity-[0.05] transition-opacity"><Zap size={120} /></div>
-              <div className="flex justify-between items-start relative z-10 w-full">
-                <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center font-black text-[#d1ff64] text-lg shadow-lg overflow-hidden border border-slate-800 p-1">
-                  {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover bg-white rounded-xl"/> : (promo.brandName ? promo.brandName[0].toUpperCase() : '?')}
-                </div>
-                <div className="bg-slate-50 p-3 rounded-2xl text-slate-400 group-hover:bg-[#d1ff64] group-hover:text-black transition-colors"><ExternalLink size={16} /></div>
-              </div>
-              <div className="relative z-10">
-                <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] mb-1 truncate">{promo.brandName}</h4>
-                <p className="text-2xl font-black tracking-tighter text-black leading-tight mb-4 truncate">{promo.discount}</p>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 group-hover:text-black transition-colors">{promo.code ? 'Copiar Código' : 'Ir a la tienda'}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-        <footer className="mt-24 text-center opacity-30"><p className="text-[9px] font-black uppercase tracking-[0.5em]">Powered by TopCodes</p></footer>
+        {/* SECCIÓN 1: DEALS DE MARCA (GRID) */}
+        {regularDeals.length > 0 && (
+          <div className="mb-12">
+             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 mb-6 text-center">Códigos Exclusivos</h3>
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {regularDeals.map(promo => (
+                  <button key={promo.id} onClick={()=>handleClick(promo)} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between h-64 text-left hover:border-black hover:shadow-xl transition-all group overflow-hidden relative">
+                    <div className="absolute -top-4 -right-4 opacity-[0.02] text-black group-hover:opacity-[0.05] transition-opacity"><Zap size={120} /></div>
+                    <div className="flex justify-between items-start relative z-10 w-full">
+                      <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center font-black text-[#d1ff64] text-lg shadow-lg overflow-hidden border border-slate-800 p-1">
+                        {promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover bg-white rounded-xl"/> : (promo.brandName ? promo.brandName[0].toUpperCase() : '?')}
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-2xl text-slate-400 group-hover:bg-[#d1ff64] group-hover:text-black transition-colors"><ExternalLink size={16} /></div>
+                    </div>
+                    <div className="relative z-10">
+                      <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] mb-1 truncate">{promo.brandName}</h4>
+                      <p className="text-2xl font-black tracking-tighter text-black leading-tight mb-4 truncate">{promo.discount}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 group-hover:text-black transition-colors">{promo.code ? 'Copiar Código' : 'Ir a la tienda'}</p>
+                    </div>
+                  </button>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {/* 🟢 SECCIÓN 2: LINKS NORMALES / PROYECTOS (LISTA BEACONS/LINKTREE STYLE) */}
+        {standardLinks.length > 0 && (
+          <div className="mt-16 mb-8 max-w-2xl mx-auto">
+            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 mb-6 text-center">Mis Enlaces</h3>
+            <div className="space-y-4">
+              {standardLinks.map(link => (
+                <button key={link.id} onClick={() => handleClick(link)} className="w-full bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 hover:border-black hover:shadow-md transition-all group active:scale-[0.98]">
+                   <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
+                     {link.logoUrl ? <img src={link.logoUrl} className="w-full h-full object-cover p-2"/> : <Link2 size={20} className="text-slate-400"/>}
+                   </div>
+                   <span className="flex-1 text-left font-black text-lg text-slate-800 group-hover:text-black transition-colors truncate">{link.brandName}</span>
+                   <div className="w-12 h-12 bg-slate-50 rounded-[1rem] flex items-center justify-center text-slate-400 group-hover:bg-black group-hover:text-[#d1ff64] transition-colors shadow-sm"><ChevronRight size={20}/></div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <footer className="mt-24 text-center opacity-30 flex items-center justify-center gap-2">
+           <BrandLogo size={14}/>
+           <p className="text-[9px] font-black uppercase tracking-[0.5em]">Powered by TopCodes</p>
+        </footer>
       </div>
     </div>
   );
