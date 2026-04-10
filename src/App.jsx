@@ -192,40 +192,36 @@ function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50 overflow-hidden font-sans">
-      <div className="hidden lg:flex flex-col justify-center w-1/2 bg-black text-white p-24 relative">
-        <div className="absolute top-0 right-0 p-10 opacity-10"><Crown size={400}/></div>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 font-sans">
+      <div className="flex flex-col justify-center w-full lg:w-1/2 bg-black text-white p-8 sm:p-16 lg:p-24 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-10 opacity-10"><Crown size={250} className="lg:w-[400px] lg:h-[400px]"/></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
+          <div className="flex items-center gap-3 mb-8 lg:mb-12">
              <BrandLogo size={32} className="text-[#d1ff64] fill-current" />
-             <span className="font-black text-3xl tracking-widest uppercase">TopCodes</span>
+             <span className="font-black text-2xl lg:text-3xl tracking-widest uppercase">TopCodes</span>
           </div>
-          <h1 className="text-6xl xl:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-8">La élite no paga <br/><span className="text-[#d1ff64]">comisiones.</span></h1>
-          <p className="text-slate-400 text-xl max-w-lg leading-relaxed mb-6">
+          <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-6 lg:mb-8">La élite no paga <br/><span className="text-[#d1ff64]">comisiones.</span></h1>
+          <p className="text-slate-400 text-lg lg:text-xl max-w-lg leading-relaxed mb-6">
             Linktree te cobra el 12% por vender. Nosotros te cobramos <strong className="text-white">$99 MXN al mes. Punto.</strong>
           </p>
-          <ul className="space-y-6 text-lg font-bold text-slate-300">
-            <li className="flex items-start gap-4">
-              <CheckCircle size={24} className="text-[#d1ff64] shrink-0 mt-1"/> 
+          <ul className="space-y-4 lg:space-y-6 text-base lg:text-lg font-bold text-slate-300">
+            <li className="flex items-start gap-3 lg:gap-4">
+              <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
               <div><strong className="text-white">Un solo pago, 0% comisiones.</strong> Tú te quedas con todo lo que generes en ventas o reservas.</div>
             </li>
-            <li className="flex items-start gap-4">
-              <CheckCircle size={24} className="text-[#d1ff64] shrink-0 mt-1"/> 
+            <li className="flex items-start gap-3 lg:gap-4">
+              <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
               <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén un escudo anti-baneo de Instagram (Shadowban safe).</div>
             </li>
-            <li className="flex items-start gap-4">
-              <CheckCircle size={24} className="text-[#d1ff64] shrink-0 mt-1"/> 
+            <li className="flex items-start gap-3 lg:gap-4">
+              <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
               <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos propios, reserva de clases (ej. Síclo), renta de Airbnbs y eventos en un solo lugar.</div>
             </li>
           </ul>
         </div>
       </div>
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-slate-50">
         <div className="w-full max-w-md">
-          <div className="lg:hidden text-center mb-8">
-             <BrandLogo size={48} className="text-black fill-[#d1ff64] mx-auto mb-4" />
-             <h1 className="text-4xl font-black uppercase tracking-tighter italic">TopCodes</h1>
-          </div>
           <div className="bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border border-slate-100">
             <div className="flex gap-6 mb-10 border-b border-slate-100">
               <button onClick={() => { setIsLogin(true); setError(''); setMsg(''); }} className={`pb-4 font-black uppercase tracking-widest text-xs transition-all ${isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300'}`}>Ingresar</button>
@@ -730,7 +726,7 @@ function SuperAdmin() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-40"><div className="flex items-center gap-4"><BrandLogo size={24} className="text-black fill-[#d1ff64]"/><h1 className="text-2xl font-black uppercase italic tracking-tighter">B2B Console</h1></div><div className="flex bg-slate-100 p-1 rounded-2xl"><button onClick={()=>setActiveTab('directorio')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='directorio'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Directorio</button><button onClick={()=>setActiveTab('finanzas')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='finanzas'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Finanzas</button></div><Link to="/" className="text-xs font-black text-slate-400 hover:text-black uppercase tracking-widest">Salir App</Link></nav>
+      <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-40"><div className="flex items-center gap-4"><BrandLogo size={24} className="text-black fill-[#d1ff64]"/><h1 className="text-2xl font-black uppercase italic tracking-tighter">B2B Console</h1></div><div className="flex bg-slate-100 p-1 rounded-2xl"><button onClick={()=>setActiveTab('directorio')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='directorio'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Directorio</button><button onClick={()=>setActiveTab('finanzas')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab==='finanzas'?'bg-white shadow-sm text-black':'text-slate-400'}`}>Finanzas</button></div><RouterLink to="/" className="text-xs font-black text-slate-400 hover:text-black uppercase tracking-widest">Salir App</RouterLink></nav>
       <main className="flex-1 max-w-7xl w-full mx-auto p-8 animate-in fade-in duration-500">
         {activeTab === 'directorio' && !selectedUser && (
           <div className="space-y-6">
