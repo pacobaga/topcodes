@@ -210,15 +210,19 @@ function LandingPage() {
           <ul className="space-y-4 lg:space-y-6 text-base lg:text-lg font-bold text-slate-300">
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
+              <div><strong className="text-white">Tus Stories mueren en 24h.</strong> TopCodes extiende la vida de tus links y códigos de descuento hasta 28 días para que no pierdas ventas.</div>
+            </li>
+            <li className="flex items-start gap-3 lg:gap-4">
+              <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
               <div><strong className="text-white">Un solo pago, 0% comisiones.</strong> Tú te quedas con todo lo que generes en ventas o reservas.</div>
             </li>
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
-              <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén un escudo anti-baneo de Instagram.</div>
+              <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén tu dominio con escudo anti-baneo de Instagram.</div>
             </li>
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
-              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos, proyectos propios, reserva de clases, podcasts y eventos en un solo lugar.</div>
+              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos, proyectos, reserva de clases, podcasts, eventos y mas en un solo lugar.</div>
             </li>
           </ul>
         </div>
@@ -1019,4 +1023,3 @@ function PublicSpot() {
       )}
     </div>
   );
-}
