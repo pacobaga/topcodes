@@ -205,7 +205,7 @@ function LandingPage() {
           </div>
           <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-6 lg:mb-8">La élite no paga <br/><span className="text-[#d1ff64]">comisiones.</span></h1>
           <p className="text-slate-400 text-lg lg:text-xl max-w-lg leading-relaxed mb-6">
-            Linktree te cobra el 12% por vender. Nosotros te cobramos <strong className="text-white">$99 MXN al mes. Punto.</strong>
+            Linktree te cobra el 12% por vender. Nosotros te cobramos <strong className="text-white">$59 MXN al mes. Punto.</strong>
           </p>
           <ul className="space-y-4 lg:space-y-6 text-base lg:text-lg font-bold text-slate-300">
             <li className="flex items-start gap-3 lg:gap-4">
@@ -218,12 +218,12 @@ function LandingPage() {
             </li>
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
-              <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén tu dominio con escudo anti-baneo de Instagram.</div>
+              <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén un escudo anti-baneo de Instagram.</div>
             </li>
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
-              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos, proyectos, reserva de clases, podcasts, eventos y mas en un solo lugar.</div>
-            </li
+              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos propios,proyectos, reserva de clases, podcasts, eventos y mas en un solo lugar.</div>
+            </li>
           </ul>
         </div>
       </div>
