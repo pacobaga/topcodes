@@ -223,7 +223,7 @@ function LandingPage() {
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
               <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos, proyectos, reserva de clases, podcasts, eventos y mas en un solo lugar.</div>
-            </li>
+            </li
           </ul>
         </div>
       </div>
@@ -1023,3 +1023,4 @@ function PublicSpot() {
       )}
     </div>
   );
+}
