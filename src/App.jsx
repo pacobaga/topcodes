@@ -204,10 +204,19 @@ function LandingPage() {
           <p className="text-slate-400 text-xl max-w-lg leading-relaxed mb-6">
             Linktree te cobra el 12% por vender. Nosotros te cobramos <strong className="text-white">$99 MXN al mes. Punto.</strong>
           </p>
-          <ul className="space-y-4 text-lg font-bold text-slate-300">
-            <li className="flex items-center gap-3"><CheckCircle size={20} className="text-[#d1ff64]"/> 0% Comisiones ocultas en tus ventas.</li>
-            <li className="flex items-center gap-3"><CheckCircle size={20} className="text-[#d1ff64]"/> Escudo anti-baneo de Instagram (Shadowban safe).</li>
-            <li className="flex items-center gap-3"><CheckCircle size={20} className="text-[#d1ff64]"/> Temporizadores de urgencia (FOMO) para cerrar ventas.</li>
+          <ul className="space-y-6 text-lg font-bold text-slate-300">
+            <li className="flex items-start gap-4">
+              <CheckCircle size={24} className="text-[#d1ff64] shrink-0 mt-1"/> 
+              <div><strong className="text-white">Un solo pago, 0% comisiones.</strong> Tú te quedas con todo lo que generes en ventas o reservas.</div>
+            </li>
+            <li className="flex items-start gap-4">
+              <CheckCircle size={24} className="text-[#d1ff64] shrink-0 mt-1"/> 
+              <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén un escudo anti-baneo de Instagram (Shadowban safe).</div>
+            </li>
+            <li className="flex items-start gap-4">
+              <CheckCircle size={24} className="text-[#d1ff64] shrink-0 mt-1"/> 
+              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos propios, reserva de clases (ej. Síclo), renta de Airbnbs y eventos en un solo lugar.</div>
+            </li>
           </ul>
         </div>
       </div>
@@ -514,10 +523,18 @@ function TabPromotions({ user, profile, promotions }) {
           </div>
 
           {!editingId && (
-            <div className="flex gap-4 mb-8 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-              <button type="button" onClick={() => setNewPromo({...newPromo, type: 'deal'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newPromo.type === 'deal' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400 hover:text-black'}`}>💰 Deal (Descuento)</button>
-              <button type="button" onClick={() => setNewPromo({...newPromo, type: 'link'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newPromo.type === 'link' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>🔗 Link Normal</button>
-            </div>
+            <>
+              <div className="flex gap-4 mb-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <button type="button" onClick={() => setNewPromo({...newPromo, type: 'deal'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newPromo.type === 'deal' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400 hover:text-black'}`}>💰 Deal (Descuento)</button>
+                <button type="button" onClick={() => setNewPromo({...newPromo, type: 'link'})} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${newPromo.type === 'link' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>🔗 Link / Producto</button>
+              </div>
+              <div className="mb-8 p-4 bg-[#faffea] border border-[#d1ff64] rounded-2xl flex items-start gap-3">
+                <Zap className="text-yellow-500 shrink-0 mt-0.5" size={18} />
+                <p className="text-xs font-bold text-slate-700 leading-relaxed">
+                  <strong className="text-black">No te limites a códigos de descuento.</strong> Usa los "Links" para compartir tus propios emprendimientos, reservación de clases (ej. Síclo), links de Airbnb, eventos y más.
+                </p>
+              </div>
+            </>
           )}
 
           <form onSubmit={handleSave} className="space-y-6">
