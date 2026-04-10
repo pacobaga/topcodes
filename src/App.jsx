@@ -214,11 +214,11 @@ function LandingPage() {
             </li>
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
-              <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén un escudo anti-baneo de Instagram (Shadowban safe).</div>
+              <div><strong className="text-white">Tu página, tu dominio propio.</strong> Protege tu marca personal y obtén un escudo anti-baneo de Instagram.</div>
             </li>
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
-              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos propios, reserva de clases (ej. Síclo), renta de Airbnbs y eventos en un solo lugar.</div>
+              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos, proyectos propios, reserva de clases, podcasts y eventos en un solo lugar.</div>
             </li>
           </ul>
         </div>
@@ -992,6 +992,31 @@ function PublicSpot() {
            <p className="text-[9px] font-black uppercase tracking-[0.5em]">Powered by TopCodes</p>
         </footer>
       </div>
+
+      {/* 🟢 BANNER FLOTANTE SOLO PARA EL DEMO */}
+      {username?.toLowerCase() === 'demo' && (
+        <div className="fixed bottom-0 left-0 w-full bg-black/80 backdrop-blur-xl border-t border-slate-800 p-4 z-50 animate-in slide-in-from-bottom-full duration-700">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#d1ff64] p-2 rounded-xl text-black">
+                <Zap size={16} className="fill-current" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-black">¿Te gustó el Spot de TopBot?</p>
+                <p className="text-slate-400 text-xs font-bold hidden sm:block">Empieza a recuperar tus ventas perdidas hoy mismo.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <RouterLink to="/" className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-colors text-center">
+                Volver a Inicio
+              </RouterLink>
+              <RouterLink to="/" onClick={() => window.scrollTo(0,0)} className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-[#d1ff64] text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-[0_0_20px_rgba(209,255,100,0.2)] text-center">
+                Crear mi Spot Gratis
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
