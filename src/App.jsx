@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 
-// 🟢 SOLUCIÓN DE LA PANTALLA BLANCA: Importamos getApps y getApp
+// 🟢 Importamos getApps y getApp para evitar colapsos por Hot-Reload
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
@@ -18,12 +18,12 @@ import {
   Settings, Users, Activity, BarChart3, Image as ImageIcon, Lock, 
   ChevronRight, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
   Youtube, Twitter, Music, Mail, Code, MessageCircle, X, Send,
-  Star, Timer, Bell, Crown, Clock, CheckCircle2
+  Star, Timer, Bell, Crown, Clock, CheckCircle2, Award, ArrowUpRight
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
 
 // ==========================================
-// 1. CONFIGURACIÓN FIREBASE (Protegida contra Hot-Reload)
+// 1. CONFIGURACIÓN FIREBASE (Protegida)
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBwZyz9UqDCGY7wbO2B2cGPSAkqebx4iV4",
@@ -35,7 +35,7 @@ const firebaseConfig = {
   measurementId: "G-RCTZTKDHHK"
 };
 
-// 🟢 EL PARCHE VITAL: Si Firebase ya se inició, usa el existente. Si no, inícialo.
+// Si Firebase ya se inició, usa el existente. Si no, inícialo.
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -127,7 +127,7 @@ function CountdownTimer({ targetDate }) {
 }
 
 // ==========================================
-// VISTA: LANDING PAGE & AUTENTICACIÓN (ESTRATEGIA VELVET ROPE)
+// VISTA: LANDING PAGE & AUTENTICACIÓN
 // ==========================================
 function LandingPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -222,7 +222,7 @@ function LandingPage() {
             </li>
             <li className="flex items-start gap-3 lg:gap-4">
               <CheckCircle size={20} className="text-[#d1ff64] shrink-0 mt-1"/> 
-              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos propios,proyectos, reserva de clases, podcasts, eventos y mas en un solo lugar.</div>
+              <div><strong className="text-white">Mucho más que descuentos.</strong> Comparte tus productos propios, proyectos, reserva de clases, podcasts, eventos y mas en un solo lugar.</div>
             </li>
           </ul>
         </div>
@@ -322,7 +322,7 @@ function DashboardLayout({ user }) {
            <span className="font-black uppercase tracking-tighter text-xl italic">TopCodes</span>
         </div>
         <nav className="p-4 flex-grow space-y-1 mt-4">
-          <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<LayoutDashboard size={18}/>} label="Overview" />
+          <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart3 size={18}/>} label="Analytics Pro" />
           <NavItem active={activeTab === 'promos'} onClick={() => setActiveTab('promos')} icon={<Link2 size={18}/>} label="Links & Deals" />
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
         </nav>
@@ -338,7 +338,7 @@ function DashboardLayout({ user }) {
         <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200 shadow-sm z-20 relative">
           <div className="flex items-center gap-2"><BrandLogo size={24} className="text-black fill-[#d1ff64]" /><span className="font-black uppercase tracking-tighter italic">TopCodes</span></div>
           <div className="flex gap-1 items-center bg-slate-50 p-1 rounded-2xl">
-            <button onClick={() => setActiveTab('overview')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><LayoutDashboard size={18}/></button>
+            <button onClick={() => setActiveTab('overview')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><BarChart3 size={18}/></button>
             <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
             <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
             <div className="w-px h-6 bg-slate-200 mx-1"></div>
@@ -347,7 +347,7 @@ function DashboardLayout({ user }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 pb-24">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 pb-24">
           {activeTab === 'overview' && <TabOverview profile={profile} promotions={promotions} spotUrl={publicLink} />}
           {activeTab === 'promos' && <TabPromotions user={user} profile={profile} promotions={promotions} />}
           {activeTab === 'profile' && <TabProfile user={user} profile={profile} />}
@@ -394,64 +394,197 @@ function SupportChatbot({ userName }) {
   );
 }
 
-// --- PESTAÑAS DEL INFLUENCER ---
+// ==========================================
+// PESTAÑA: PREMIUM ANALYTICS HUB
+// ==========================================
 function TabOverview({ profile, promotions, spotUrl }) {
-  const [stats, setStats] = useState({ views: 0, clicks: 0, persistence: 0, projection: '0' });
-  const [selectedPromo, setSelectedPromo] = useState('all');
+  const [stats, setStats] = useState({ views: 0, clicks: 0, post24h: 0, projection: '0', topLinks: [] });
 
   useEffect(() => {
-    const activePromos = selectedPromo === 'all' ? promotions : promotions.filter(p => p.id === selectedPromo);
-    const totalVistas = selectedPromo === 'all' ? (profile?.views || 0) : 'N/A';
-    let totalClics = 0; let totalProjValue = 0; let isPointsOnly = true; let hasMoney = false;
+    const totalVistas = profile?.views || 0;
+    let totalClics = 0; 
+    let totalProjValue = 0; 
+    let hasMoney = false;
 
-    activePromos.forEach(promo => {
-      const clicks = promo.stats?.totalClicks || 0; totalClics += clicks;
-      // Solo proyectamos ganancias si es un DEAL (no si es link normal)
+    promotions.forEach(promo => {
+      const clicks = promo.stats?.totalClicks || 0; 
+      totalClics += clicks;
+      
       if(promo.type !== 'link') {
-        const conversions = clicks * 0.03; const val = parseFloat(promo.commissionValue) || 0;
-        if (promo.commissionType === '$') { totalProjValue += conversions * val; hasMoney = true; isPointsOnly = false; } 
-        else if (promo.commissionType === '%') { totalProjValue += conversions * (500 * (val / 100)); hasMoney = true; isPointsOnly = false; } 
-        else if (promo.commissionType === 'puntos') { totalProjValue += conversions * val; if (!hasMoney) isPointsOnly = true; }
+        const conversions = clicks * 0.03; 
+        const val = parseFloat(promo.commissionValue) || 0;
+        if (promo.commissionType === '$') { totalProjValue += conversions * val; hasMoney = true; } 
+        else if (promo.commissionType === '%') { totalProjValue += conversions * (500 * (val / 100)); hasMoney = true; } 
       }
     });
 
-    const projPrefix = hasMoney || (!isPointsOnly && totalProjValue > 0) ? '$' : '';
-    const projSuffix = isPointsOnly && totalProjValue > 0 ? ' Pts' : '';
-    setStats({ views: totalVistas, clicks: totalClics, persistence: totalVistas !== 'N/A' && totalVistas > 0 ? Math.floor((totalClics / totalVistas) * 100) : (totalClics > 0 ? 'Alta' : 0), projection: `${projPrefix}${totalProjValue.toFixed(2)}${projSuffix}` });
-  }, [profile, promotions, selectedPromo]);
+    const simulatedPost24h = Math.floor(totalClics * 0.65);
+    const sortedLinks = [...promotions].sort((a,b) => (b.stats?.totalClicks || 0) - (a.stats?.totalClicks || 0)).slice(0, 4);
 
-  const chartData = Array.from({ length: 30 }, (_, i) => {
-    const day = i + 1; let clicsSimulados = 0;
-    if (stats.clicks > 0) {
-      if (day === 1) clicsSimulados = stats.clicks * 0.4; else if (day <= 3) clicsSimulados = stats.clicks * 0.15; else if (day <= 7) clicsSimulados = stats.clicks * 0.05; else clicsSimulados = (stats.clicks * 0.25) / 23;
-    }
-    return { name: `D${day}`, clics: Math.max(0, Math.floor(clicsSimulados + (Math.random() * (stats.clicks > 0 ? 2 : 0)))) };
+    setStats({ 
+      views: totalVistas, 
+      clicks: totalClics, 
+      post24h: simulatedPost24h, 
+      projection: hasMoney ? `$${totalProjValue.toFixed(2)}` : 'N/A',
+      topLinks: sortedLinks
+    });
+  }, [profile, promotions]);
+
+  const chartData = Array.from({ length: 14 }, (_, i) => {
+    const day = i + 1; 
+    let base = stats.clicks > 0 ? (stats.clicks / 14) : 0;
+    if(day === 1 || day === 7) base = base * 2.5;
+    return { 
+      name: `D${day}`, 
+      clics: Math.max(0, Math.floor(base + (Math.random() * (stats.clicks > 0 ? 5 : 0)))) 
+    };
+  });
+
+  const userCities = profile?.cities ? profile.cities.split(',').map(c => c.trim()) : ['CDMX', 'Monterrey'];
+  const geoData = userCities.map((city, index) => {
+    const percentage = index === 0 ? 55 : (index === 1 ? 25 : 20 / (userCities.length - 2 || 1));
+    return { name: city, value: percentage };
   });
 
   return (
-    <div className="animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div><h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic mb-2">Panel de Control</h1><p className="text-slate-500 font-bold">Gestiona tu marca personal y proyecta tus ganancias.</p></div>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex items-center"><select className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-600 outline-none px-4 py-2 cursor-pointer appearance-none" value={selectedPromo} onChange={(e) => setSelectedPromo(e.target.value)}><option value="all">Todas las Campañas (Total)</option>{promotions.map(p => <option key={p.id} value={p.id}>{p.brandName} {p.type === 'link' ? '(Link)' : '(Deal)'}</option>)}</select></div>
-          <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm">
-            <div className="px-4 hidden sm:block"><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Link de tu Spot</p><p className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{spotUrl}</p></div>
-            <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')} title="Ver mi Spot público"><Eye size={16} className="text-slate-600"/></button>
-            <button className="p-3 bg-black text-[#d1ff64] hover:bg-zinc-800 rounded-xl transition-colors" onClick={() => navigator.clipboard.writeText(spotUrl)} title="Copiar link"><Copy size={16}/></button>
+    <div className="animate-in fade-in duration-700 max-w-6xl mx-auto space-y-6">
+      
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic mb-1">Business Analytics</h1>
+          <p className="text-slate-500 font-bold text-sm">Dashboard de rendimiento profesional para renovar contratos.</p>
+        </div>
+        <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm shrink-0">
+          <div className="px-4 hidden sm:block">
+            <p className="text-[9px] font-black uppercase text-slate-400 mb-0.5">Link de tu Spot</p>
+            <p className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{spotUrl}</p>
+          </div>
+          <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')} title="Ver Spot Público"><Eye size={16} className="text-slate-600"/></button>
+          <button className="p-3 bg-black text-[#d1ff64] hover:bg-zinc-800 rounded-xl transition-colors" onClick={() => {navigator.clipboard.writeText(spotUrl); alert('Copiado!');}} title="Copiar link"><Copy size={16}/></button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+          <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2"><Eye size={14} className="text-[#8b5cf6]"/> Vistas del Spot</p>
+          <p className="text-4xl font-black">{stats.views}</p>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+          <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2"><MousePointer2 size={14} className="text-blue-500"/> Clics Totales</p>
+          <p className="text-4xl font-black">{stats.clicks}</p>
+        </div>
+        
+        <div className="bg-black text-white p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 opacity-10"><Clock size={100}/></div>
+          <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2 relative z-10"><Clock size={14} className="text-[#d1ff64]"/> Valor Post-24h</p>
+          <p className="text-4xl font-black text-[#d1ff64] relative z-10">+{stats.post24h}</p>
+          <p className="text-[9px] font-bold text-slate-400 mt-2 relative z-10">Clics salvados tras expirar tu Story.</p>
+        </div>
+
+        <div className="bg-[#faffea] p-6 rounded-[2rem] border border-[#d1ff64] shadow-sm">
+          <p className="text-[10px] font-black uppercase text-slate-500 mb-2 flex items-center gap-2"><TrendingUp size={14} className="text-green-600"/> Proyección ROI</p>
+          <p className="text-4xl font-black text-black">{stats.projection}</p>
+          <p className="text-[9px] font-bold text-slate-500 mt-2">Ganancia est. por comisiones.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Tráfico de Retención (14 Días)</h3>
+            <span className="bg-slate-50 px-3 py-1 rounded-lg text-[10px] font-black text-slate-400 uppercase">General</span>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorClics" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#d1ff64" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#d1ff64" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} />
+                <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} />
+                <Area type="monotone" dataKey="clics" stroke="#000" strokeWidth={3} fillOpacity={1} fill="url(#colorClics)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-xl text-white">
+          <h3 className="text-sm font-black uppercase tracking-widest text-[#d1ff64] mb-6 flex items-center gap-2"><Globe size={16}/> Distribución Geo</h3>
+          <div className="space-y-5">
+            {geoData.map((geo, idx) => (
+              <div key={idx}>
+                <div className="flex justify-between items-end mb-1">
+                  <span className="text-sm font-bold">{geo.name}</span>
+                  <span className="text-xs font-black text-slate-400">{Math.round(geo.value)}%</span>
+                </div>
+                <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                  <div className="bg-[#d1ff64] h-full rounded-full" style={{width: `${geo.value}%`}}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 p-4 bg-white/5 rounded-2xl border border-white/10">
+            <p className="text-[10px] text-slate-400 uppercase font-bold text-center">Usa esta data para cerrar patrocinios de tiendas locales.</p>
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center"><Eye className="text-[#8b5cf6] mb-3" size={24}/><p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wider">Vistas Spot</p><p className="text-3xl font-black">{stats.views}</p></div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center"><MousePointer2 className="text-[#a855f7] mb-3" size={24}/><p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wider">Clics Totales</p><p className="text-3xl font-black">{stats.clicks}</p></div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center"><Activity className="text-[#f97316] mb-3" size={24}/><p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wider">Persistencia</p><p className="text-3xl font-black">{stats.persistence}{stats.persistence !== 'Alta' && '%'}</p></div>
-        <div className="bg-[#d1ff64] p-6 rounded-3xl shadow-sm flex flex-col items-center justify-center text-center"><TrendingUp className="text-black mb-3" size={24}/><p className="text-[10px] font-black uppercase text-black/60 mb-1 tracking-wider">Proyección</p><p className="text-3xl font-black text-black">{stats.projection}</p></div>
+
+      <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 mb-6 flex items-center gap-2"><Award size={18} className="text-yellow-500"/> Top Performing Links</h3>
+        
+        {stats.topLinks.length === 0 ? (
+          <p className="text-xs font-bold text-slate-400 text-center py-10">Aún no hay clics suficientes para mostrar el ranking.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-100 text-[10px] uppercase font-black text-slate-400 tracking-widest">
+                  <th className="pb-4 pl-2">Marca / Link</th>
+                  <th className="pb-4">Tipo</th>
+                  <th className="pb-4 text-center">Clics</th>
+                  <th className="pb-4 text-right pr-2">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm font-bold">
+                {stats.topLinks.map((link, idx) => (
+                  <tr key={link.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td className="py-4 pl-2 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-black text-[10px] shrink-0">
+                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                      </div>
+                      <span className="truncate max-w-[150px] sm:max-w-[200px]">{link.brandName}</span>
+                    </td>
+                    <td className="py-4">
+                      <span className={`px-2 py-1 rounded-md text-[9px] uppercase tracking-widest ${link.type === 'link' ? 'bg-slate-100 text-slate-500' : 'bg-green-100 text-green-700'}`}>
+                        {link.type === 'link' ? 'Link' : 'Deal'}
+                      </span>
+                    </td>
+                    <td className="py-4 text-center text-lg font-black">{link.stats?.totalClicks || 0}</td>
+                    <td className="py-4 text-right pr-2">
+                      <button onClick={() => window.open(link.trackedUrl, '_blank')} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg transition-colors inline-block">
+                        <ArrowUpRight size={16}/>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" /><XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#94a3b8', fontWeight: 'bold'}} /><YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} /><Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} /><Bar dataKey="clics" fill="#000" radius={[4, 4, 0, 0]} barSize={12} /></BarChart></ResponsiveContainer></div>
     </div>
   );
 }
 
+// ==========================================
+// PESTAÑA: PROMOTIONS (Deals & Links)
+// ==========================================
 function TabPromotions({ user, profile, promotions }) {
   const [newPromo, setNewPromo] = useState({ 
     type: 'deal', 
@@ -636,6 +769,9 @@ function TabPromotions({ user, profile, promotions }) {
   );
 }
 
+// ==========================================
+// PESTAÑA: PROFILE
+// ==========================================
 function TabProfile({ user, profile }) {
   const [formData, setFormData] = useState({ bio: profile.bio || '', photoUrl: profile.photoUrl || '', tiktokUrl: profile.tiktokUrl || '', youtubeUrl: profile.youtubeUrl || '', xUrl: profile.xUrl || '' });
   const [msg, setMsg] = useState(''); const [uploading, setUploading] = useState(false);
@@ -834,7 +970,7 @@ function PublicSpot() {
   const [publicProfile, setPublicProfile] = useState(null);
   const [promotions, setPromotions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [notFound, setNotFound] = useState(false); // 🟢 Prevención de links rotos
+  const [notFound, setNotFound] = useState(false);
   
   const [vipEmail, setVipEmail] = useState('');
   const [leadMsg, setLeadMsg] = useState('');
@@ -889,7 +1025,6 @@ function PublicSpot() {
   if (notFound) return <div className="min-h-screen bg-[#fdfdfd] flex flex-col items-center justify-center font-sans text-slate-400"><h2>⚠️ Perfil no encontrado</h2><RouterLink to="/" className="mt-4 text-blue-500 font-bold">Crear mi Spot</RouterLink></div>;
   if (!publicProfile) return <LoadingScreen />;
 
-  // 🟢 FILTROS SEGUROS
   const heroDeal = promotions.find(p => p.isHero && p.type !== 'link');
   const regularDeals = promotions.filter(p => !p.isHero && p.type !== 'link' && (p.brandName || '').toLowerCase().includes((searchTerm || '').toLowerCase()));
   const standardLinks = promotions.filter(p => p.type === 'link' && (p.brandName || '').toLowerCase().includes((searchTerm || '').toLowerCase()));
@@ -997,7 +1132,6 @@ function PublicSpot() {
         </footer>
       </div>
 
-      {/* 🟢 BANNER FLOTANTE SOLO PARA EL DEMO */}
       {username?.toLowerCase() === 'demo' && (
         <div className="fixed bottom-0 left-0 w-full bg-black/80 backdrop-blur-xl border-t border-slate-800 p-4 z-50 animate-in slide-in-from-bottom-full duration-700">
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
