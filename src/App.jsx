@@ -76,6 +76,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={user ? <DashboardLayout user={user} /> : <LandingPage />} />
         <Route path="/admin-master" element={<SuperAdmin />} />
+        <Route path="/demo/panel" element={<DemoDashboardLayout />} />
         <Route path="/:username" element={<PublicSpot />} />
       </Routes>
     </Router>
@@ -183,15 +184,34 @@ function LandingPage() {
           setEmail(''); setIgUser(''); setInviteCode('');
         }
       }
-    } catch (err) { setError(err.message); }
+    } catch (err) { 
+      // 🟢 TRADUCTOR DE ERRORES FIREBASE (Mejora de UX)
+      if (err.code === 'auth/too-many-requests') {
+        setError('Acceso bloqueado temporalmente por múltiples intentos. Por favor, espera 5 minutos o usa datos móviles.');
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('El correo o la contraseña son incorrectos.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('Este correo ya está registrado en TopCodes.');
+      } else if (err.message === 'Este usuario de IG ya está registrado.') {
+         setError(err.message);
+      } else {
+        setError('Ocurrió un error. Verifica tus datos e intenta de nuevo.'); 
+      }
+    }
   };
 
   const handleResetPassword = async () => {
-    if (!email) return setError('Ingresa tu correo para resetear la contraseña.');
+    if (!email) return setError('Ingresa tu correo en el campo superior para resetear la contraseña.');
     try {
       await sendPasswordResetEmail(auth, email);
       setMsg('Correo de recuperación enviado. Revisa tu bandeja o carpeta de Spam.');
-    } catch (err) { setError('Error al enviar correo.'); }
+    } catch (err) { 
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-email') {
+        setError('No encontramos ninguna cuenta con ese correo.');
+      } else {
+        setError('Error al enviar correo.'); 
+      }
+    }
   };
 
   return (
@@ -239,8 +259,8 @@ function LandingPage() {
               <button onClick={() => { setIsLogin(false); setError(''); setMsg(''); }} className={`pb-4 font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all ${!isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300 hover:text-black'}`}>Acceso VIP</button>
               <RouterLink to="/demo" className="pb-4 font-black uppercase tracking-widest text-[10px] sm:text-xs text-blue-500 hover:text-blue-600 transition-all flex items-center gap-1 ml-auto"><Eye size={14}/> Ver Demo</RouterLink>
             </div>
-            {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold mb-6 flex items-center gap-2"><AlertCircle size={14}/> {error}</div>}
-            {msg && <div className="bg-green-50 text-green-600 p-4 rounded-xl text-xs font-bold mb-6 flex items-center gap-2"><CheckCircle size={14}/> {msg}</div>}
+            {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold mb-6 flex items-start gap-2"><AlertCircle size={16} className="shrink-0 mt-0.5"/> <p>{error}</p></div>}
+            {msg && <div className="bg-green-50 text-green-600 p-4 rounded-xl text-xs font-bold mb-6 flex items-center gap-2"><CheckCircle size={14}/> <p>{msg}</p></div>}
             
             <form onSubmit={handleAuth} className="space-y-4">
               {isLogin ? (
@@ -248,7 +268,7 @@ function LandingPage() {
                   <input type="email" placeholder="Correo Electrónico" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={email} onChange={e=>setEmail(e.target.value)}/>
                   <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={password} onChange={e=>setPassword(e.target.value)}/>
                   <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl mt-4">Acceder al Spot</button>
-                  <div className="mt-8 text-center"><button onClick={handleResetPassword} type="button" className="text-[10px] font-black uppercase text-slate-400 hover:text-black tracking-widest transition-colors">¿Olvidaste tu contraseña?</button></div>
+                  <div className="mt-8 text-center"><button onClick={handleResetPassword} type="button" className="text-[10px] font-black uppercase text-slate-400 hover:text-black tracking-widest transition-colors outline-none">¿Olvidaste tu contraseña?</button></div>
                 </>
               ) : (
                 <div className="space-y-4 animate-in fade-in">
@@ -351,6 +371,62 @@ function DashboardLayout({ user }) {
           {activeTab === 'overview' && <TabOverview profile={profile} promotions={promotions} spotUrl={publicLink} />}
           {activeTab === 'promos' && <TabPromotions user={user} profile={profile} promotions={promotions} />}
           {activeTab === 'profile' && <TabProfile user={user} profile={profile} />}
+        </div>
+      </main>
+      <SupportChatbot userName={profile.username} />
+    </div>
+  );
+}
+
+// ==========================================
+// VISTA: DEMO DASHBOARD (Panel Simulado para TopBot)
+// ==========================================
+function DemoDashboardLayout() {
+  const [activeTab, setActiveTab] = useState('overview'); 
+  const profile = DEMO_PROFILE;
+  const promotions = DEMO_PROMOTIONS;
+  const publicLink = `${window.location.origin}/demo`;
+
+  return (
+    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans relative">
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col hidden lg:flex shrink-0 z-30 shadow-sm">
+        <div className="p-8 flex items-center gap-3">
+           <div className="bg-black p-2 rounded-xl"><BrandLogo size={20} className="text-[#d1ff64] fill-current" /></div>
+           <span className="font-black uppercase tracking-tighter text-xl italic">TopCodes</span>
+        </div>
+        <nav className="p-4 flex-grow space-y-1 mt-4">
+          <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart3 size={18}/>} label="Analytics Pro" />
+          <NavItem active={activeTab === 'promos'} onClick={() => setActiveTab('promos')} icon={<Link2 size={18}/>} label="Links & Deals" />
+          <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
+        </nav>
+        <div className="p-6 border-t border-slate-100 space-y-2">
+          <RouterLink to="/demo" className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-[#8b5cf6] text-white hover:bg-purple-600 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-md">
+            <Eye size={16} /> Ver Spot Público
+          </RouterLink>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <div className="bg-[#8b5cf6] text-white p-2 text-center text-xs font-bold flex flex-wrap justify-center items-center gap-4 z-20 shadow-sm">
+            <span>Estás viendo el Panel Interno de demostración (TopBot)</span>
+            <div className="flex gap-2">
+                <RouterLink to="/demo" className="bg-white text-[#8b5cf6] px-3 py-1.5 rounded-lg text-[10px] uppercase font-black hover:scale-105 transition-transform">Ver Spot</RouterLink>
+                <RouterLink to="/" className="bg-black text-[#d1ff64] px-3 py-1.5 rounded-lg text-[10px] uppercase font-black hover:scale-105 transition-transform">Crear mi cuenta</RouterLink>
+            </div>
+        </div>
+        <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200 shadow-sm z-20 relative">
+          <div className="flex items-center gap-2"><BrandLogo size={24} className="text-black fill-[#d1ff64]" /><span className="font-black uppercase tracking-tighter italic">TopCodes</span></div>
+          <div className="flex gap-1 items-center bg-slate-50 p-1 rounded-2xl">
+            <button onClick={() => setActiveTab('overview')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><BarChart3 size={18}/></button>
+            <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
+            <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 pb-24">
+          {activeTab === 'overview' && <TabOverview profile={profile} promotions={promotions} spotUrl={publicLink} />}
+          {activeTab === 'promos' && <TabPromotions user={{uid:'demo_user_123'}} profile={profile} promotions={promotions} isDemo={true} />}
+          {activeTab === 'profile' && <TabProfile user={{uid:'demo_user_123'}} profile={profile} isDemo={true} />}
         </div>
       </main>
       <SupportChatbot userName={profile.username} />
@@ -585,7 +661,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
 // ==========================================
 // PESTAÑA: PROMOTIONS (Deals & Links)
 // ==========================================
-function TabPromotions({ user, profile, promotions }) {
+function TabPromotions({ user, profile, promotions, isDemo }) {
   const [newPromo, setNewPromo] = useState({ 
     type: 'deal', 
     brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', 
@@ -602,7 +678,13 @@ function TabPromotions({ user, profile, promotions }) {
   const previewLogoUrl = cleanDomain.includes('.') ? `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=256` : '';
 
   const handleSave = async (e) => {
-    e.preventDefault(); setLoading(true); let trackedUrl = newPromo.originalUrl;
+    e.preventDefault(); 
+    if (isDemo) {
+       setMsg('👀 Estás en el Demo. Los cambios no se guardan en la base de datos real.');
+       setTimeout(() => setMsg(''), 3000);
+       return;
+    }
+    setLoading(true); let trackedUrl = newPromo.originalUrl;
     try {
       const urlObj = new URL(newPromo.originalUrl);
       urlObj.searchParams.set('utm_source', 'topcodes'); urlObj.searchParams.set('subid', profile.username);
@@ -646,6 +728,10 @@ function TabPromotions({ user, profile, promotions }) {
 
   const handleDelete = async (promoId) => {
     if(!window.confirm('¿Eliminar elemento?')) return;
+    if (isDemo) {
+       alert('Modo Demo: Acción deshabilitada.');
+       return;
+    }
     await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'promotions', promoId));
     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', promoId));
   };
@@ -772,7 +858,7 @@ function TabPromotions({ user, profile, promotions }) {
 // ==========================================
 // PESTAÑA: PROFILE
 // ==========================================
-function TabProfile({ user, profile }) {
+function TabProfile({ user, profile, isDemo }) {
   const [formData, setFormData] = useState({ bio: profile.bio || '', photoUrl: profile.photoUrl || '', tiktokUrl: profile.tiktokUrl || '', youtubeUrl: profile.youtubeUrl || '', xUrl: profile.xUrl || '' });
   const [msg, setMsg] = useState(''); const [uploading, setUploading] = useState(false);
 
@@ -780,13 +866,24 @@ function TabProfile({ user, profile }) {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (isDemo) {
+       setMsg('👀 Modo Demo: El perfil no se modificará.');
+       setTimeout(() => setMsg(''), 3000);
+       return;
+    }
     await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile'), formData);
     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', profile.username), formData);
     setMsg('✅ Perfil actualizado.'); setTimeout(() => setMsg(''), 3000);
   };
 
   const handlePhotoUpload = (e) => {
-    const file = e.target.files[0]; if (!file) return; setUploading(true); setMsg('');
+    const file = e.target.files[0]; if (!file) return; 
+    if (isDemo) {
+         setMsg('👀 Modo Demo: No se pueden subir fotos reales.');
+         setTimeout(() => setMsg(''), 3000);
+         return;
+    }
+    setUploading(true); setMsg('');
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -1144,12 +1241,15 @@ function PublicSpot() {
                 <p className="text-slate-400 text-xs font-bold hidden sm:block">Empieza a recuperar tus ventas perdidas hoy mismo.</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <RouterLink to="/" className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-colors text-center">
-                Volver a Inicio
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap justify-center">
+              <RouterLink to="/" className="px-4 py-3 rounded-2xl bg-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-colors text-center shrink-0">
+                Inicio
               </RouterLink>
-              <RouterLink to="/" onClick={() => window.scrollTo(0,0)} className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-[#d1ff64] text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-[0_0_20px_rgba(209,255,100,0.2)] text-center">
-                Crear mi Spot Gratis
+              <RouterLink to="/demo/panel" className="px-4 py-3 rounded-2xl bg-[#8b5cf6] text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform text-center shrink-0 shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+                Ver Panel Interno
+              </RouterLink>
+              <RouterLink to="/" onClick={() => window.scrollTo(0,0)} className="px-4 py-3 rounded-2xl bg-[#d1ff64] text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-[0_0_15px_rgba(209,255,100,0.2)] text-center shrink-0">
+                Crear Spot
               </RouterLink>
             </div>
           </div>
