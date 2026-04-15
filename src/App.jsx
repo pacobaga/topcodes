@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 
-// 🟢 Importamos getApps y getApp para evitar colapsos por Hot-Reload
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
@@ -35,7 +34,6 @@ const firebaseConfig = {
   measurementId: "G-RCTZTKDHHK"
 };
 
-// Si Firebase ya se inició, usa el existente. Si no, inícialo.
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -45,9 +43,10 @@ const appId = 'topcodes-mvp-v1';
 const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología", "Lifestyle", "Viajes", "Fitness", "Gaming"];
 
 // ==========================================
-// 2. CONFIGURACIÓN DE MARCA (LOGO)
+// 2. CONFIGURACIÓN DE MARCA (LOGO Y CONTACTO)
 // ==========================================
 const BRAND_LOGO_URL = ""; 
+const SUPPORT_EMAIL = "contacto@topcodes.lat"; // 🟢 Tu nuevo correo corporativo oficial
 
 const BrandLogo = ({ size = 32, className = "" }) => {
   if (BRAND_LOGO_URL) {
@@ -142,7 +141,7 @@ function LandingPage() {
   const [msg, setMsg] = useState('');
 
   const SECRET_CODE_FOUNDERS = 'FOUNDERS26'; 
-  const SECRET_CODE_BETA = 'BETA50'; 
+  const SECRET_CODE_BETA = 'BETA100'; 
   
   const isUnlockedFounders = inviteCode.trim().toUpperCase() === SECRET_CODE_FOUNDERS;
   const isUnlockedBeta = inviteCode.trim().toUpperCase() === SECRET_CODE_BETA;
@@ -164,7 +163,7 @@ function LandingPage() {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const uid = userCredential.user.uid;
           
-          const assignedPlan = isUnlockedFounders ? 'Founder (1 Año Gratis)' : 'Beta 50 (1 Mes Gratis)';
+          const assignedPlan = isUnlockedFounders ? 'Founder (1 Año Gratis)' : 'Beta 100 (1 Mes Gratis)';
           
           const profileData = { 
             username: cleanUser, email, category, cities, bio: 'Bienvenido a mi Spot',
@@ -180,12 +179,11 @@ function LandingPage() {
             email: email,
             timestamp: new Date().toISOString()
           });
-          setMsg('🎉 ¡Estás en la lista VIP! Si eres de los primeros 50, recibirás tu código de 1 MES GRATIS por correo.');
+          setMsg('🎉 ¡Estás en la lista VIP! Si eres de los primeros 100, recibirás tu código de 1 MES GRATIS por correo.');
           setEmail(''); setIgUser(''); setInviteCode('');
         }
       }
     } catch (err) { 
-      // 🟢 TRADUCTOR DE ERRORES FIREBASE (Mejora de UX)
       if (err.code === 'auth/too-many-requests') {
         setError('Acceso bloqueado temporalmente por múltiples intentos. Por favor, espera 5 minutos o usa datos móviles.');
       } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
@@ -272,10 +270,10 @@ function LandingPage() {
                 </>
               ) : (
                 <div className="space-y-4 animate-in fade-in">
-                  <div className="bg-slate-900 p-4 rounded-2xl mb-6 border border-slate-800 relative overflow-hidden">
+                  <div className="bg-slate-900 p-5 rounded-2xl mb-6 border border-slate-800 relative overflow-hidden">
                      <div className="absolute top-0 right-0 p-2 opacity-10"><Zap size={60}/></div>
-                     <p className="text-[10px] text-[#d1ff64] font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Clock size={12}/> Beta Cerrada</p>
-                     <p className="text-xs text-slate-300 font-bold leading-relaxed">Únete a la lista de espera. Los primeros <strong className="text-white">50 creadores</strong> en entrar recibirán <strong className="text-[#d1ff64]">1 Mes de TopCodes PRO Gratis</strong>.</p>
+                     <p className="text-[10px] text-[#d1ff64] font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Clock size={12}/> Beta Privada Abierta</p>
+                     <p className="text-xs text-slate-300 font-bold leading-relaxed">Únete a la lista de espera. Los primeros <strong className="text-white">100 creadores</strong> obtienen <strong className="text-[#d1ff64]">1 Mes Gratis</strong>. <br/><br/><span className="text-[10px] text-slate-400 uppercase tracking-wider block">🎁 Bonus: +15 días extra por agendar una sesión de feedback con nuestro equipo.</span></p>
                   </div>
                   
                   <input type="text" placeholder="Usuario de Instagram (@...)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
@@ -287,7 +285,7 @@ function LandingPage() {
                     <div className="space-y-4 pt-4 border-t border-slate-100 animate-in slide-in-from-top-4">
                       <p className="text-[10px] font-black text-green-500 uppercase tracking-widest text-center flex items-center justify-center gap-1">
                         <Lock size={12} className="opacity-50"/> 
-                        {isUnlockedFounders ? 'Acceso Founder (1 Año Gratis 👑)' : 'Acceso Beta (1 Mes Gratis 🚀)'}
+                        {isUnlockedFounders ? 'Acceso Founder (1 Año Gratis 👑)' : 'Acceso Beta 100 (1 Mes Gratis 🚀)'}
                       </p>
                       <div className="grid grid-cols-2 gap-3">
                         <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={category} onChange={e=>setCategory(e.target.value)}><option value="">Nicho</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
@@ -318,8 +316,6 @@ function DashboardLayout({ user }) {
   const [promotions, setPromotions] = useState([]);
   const [activeTab, setActiveTab] = useState('overview'); 
 
-  const supportPhone = "525500000000"; 
-
   useEffect(() => {
     const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'profile');
     const unsubProfile = onSnapshot(profileRef, (docSnap) => { if (docSnap.exists()) setProfile(docSnap.data()); });
@@ -331,8 +327,8 @@ function DashboardLayout({ user }) {
   if (!profile) return <LoadingScreen />;
   
   const publicLink = `${window.location.origin}/${profile.username}`;
-  const waMessage = encodeURIComponent(`¡Hola equipo TopCodes! Necesito ayuda con mi cuenta (@${profile.username}).`);
-  const waLink = `https://wa.me/${supportPhone}?text=${waMessage}`;
+  // 🟢 Enlace de soporte ahora apunta al correo oficial
+  const mailtoLink = `mailto:${SUPPORT_EMAIL}?subject=Soporte%20TopCodes%20-%20@${profile.username}`;
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans relative">
@@ -347,8 +343,9 @@ function DashboardLayout({ user }) {
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
         </nav>
         <div className="p-6 border-t border-slate-100 space-y-2">
-          <a href={waLink} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-green-50 text-green-600 hover:bg-green-100 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
-            <MessageCircle size={16} /> WhatsApp
+          {/* Botón de Email Oficial */}
+          <a href={mailtoLink} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-black hover:bg-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
+            <Mail size={16} /> Soporte
           </a>
           <button onClick={() => signOut(auth)} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-red-500 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"><LogOut size={16} /> Salir </button>
         </div>
@@ -362,7 +359,7 @@ function DashboardLayout({ user }) {
             <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
             <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
             <div className="w-px h-6 bg-slate-200 mx-1"></div>
-            <a href={waLink} target="_blank" rel="noopener noreferrer" className="p-2.5 text-green-500 hover:bg-green-50 rounded-xl"><MessageCircle size={18}/></a>
+            <a href={mailtoLink} className="p-2.5 text-slate-400 hover:text-black rounded-xl"><Mail size={18}/></a>
             <button onClick={() => signOut(auth)} className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl"><LogOut size={18}/></button>
           </div>
         </div>
@@ -378,6 +375,10 @@ function DashboardLayout({ user }) {
   );
 }
 
+const NavItem = ({ active, icon, label, onClick }) => (
+  <button onClick={onClick} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${active ? 'bg-black text-[#d1ff64]' : 'text-slate-400 hover:bg-slate-50'}`}>{icon} {label}</button>
+);
+
 // ==========================================
 // VISTA: DEMO DASHBOARD (Panel Simulado para TopBot)
 // ==========================================
@@ -386,6 +387,7 @@ function DemoDashboardLayout() {
   const profile = DEMO_PROFILE;
   const promotions = DEMO_PROMOTIONS;
   const publicLink = `${window.location.origin}/demo`;
+  const mailtoLink = `mailto:${SUPPORT_EMAIL}?subject=Dudas%20sobre%20el%20Demo`;
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans relative">
@@ -420,6 +422,8 @@ function DemoDashboardLayout() {
             <button onClick={() => setActiveTab('overview')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><BarChart3 size={18}/></button>
             <button onClick={() => setActiveTab('promos')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'promos' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><Link2 size={18}/></button>
             <button onClick={() => setActiveTab('profile')} className={`p-2.5 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-black text-[#d1ff64] shadow-md' : 'text-slate-400'}`}><User size={18}/></button>
+            <div className="w-px h-6 bg-slate-200 mx-1"></div>
+            <a href={mailtoLink} className="p-2.5 text-slate-400 hover:text-black rounded-xl"><Mail size={18}/></a>
           </div>
         </div>
 
@@ -434,10 +438,6 @@ function DemoDashboardLayout() {
   );
 }
 
-const NavItem = ({ active, icon, label, onClick }) => (
-  <button onClick={onClick} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${active ? 'bg-black text-[#d1ff64]' : 'text-slate-400 hover:bg-slate-50'}`}>{icon} {label}</button>
-);
-
 // ==========================================
 // COMPONENTE: CHATBOT DE SOPORTE (TopBot)
 // ==========================================
@@ -451,7 +451,7 @@ function SupportChatbot({ userName }) {
     const newMsg = { text: input, sender: 'user' };
     setMessages(prev => [...prev, newMsg]); setInput('');
     setTimeout(() => {
-      let botReply = "He guardado tu mensaje. Si es urgente, haz clic en el botón de WhatsApp del menú para hablar con el equipo.";
+      let botReply = `He guardado tu mensaje. Si es urgente, mándanos un correo a ${SUPPORT_EMAIL}.`;
       setMessages(prev => [...prev, { text: botReply, sender: 'bot' }]);
     }, 1000);
   };
@@ -995,8 +995,8 @@ function SuperAdmin() {
                       <td className="p-6">
                         {u.plan === 'Founder (1 Año Gratis)' ? (
                            <span className="bg-yellow-50 text-yellow-600 px-3 py-1 rounded-md text-[9px] uppercase tracking-widest flex items-center gap-1 w-max"><Crown size={10}/> Founder</span>
-                        ) : u.plan === 'Beta 50 (1 Mes Gratis)' ? (
-                           <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-[9px] uppercase tracking-widest flex items-center gap-1 w-max"><Zap size={10}/> Beta 50</span>
+                        ) : u.plan === 'Beta 100 (1 Mes Gratis)' ? (
+                           <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-[9px] uppercase tracking-widest flex items-center gap-1 w-max"><Zap size={10}/> Beta 100</span>
                         ) : (
                            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-md text-[9px] uppercase tracking-widest w-max">Gratis</span>
                         )}
