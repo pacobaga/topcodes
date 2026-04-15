@@ -46,7 +46,7 @@ const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología
 // 2. CONFIGURACIÓN DE MARCA (LOGO Y CONTACTO)
 // ==========================================
 const BRAND_LOGO_URL = ""; 
-const SUPPORT_EMAIL = "contacto@topcodes.lat"; // 🟢 Tu nuevo correo corporativo oficial
+const SUPPORT_EMAIL = "contacto@topcodes.lat"; // 🟢 Correo corporativo oficial
 
 const BrandLogo = ({ size = 32, className = "" }) => {
   if (BRAND_LOGO_URL) {
@@ -213,7 +213,14 @@ function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 font-sans">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 font-sans relative">
+      
+      {/* 🟢 BOTÓN DE CONTACTO FLOTANTE */}
+      <a href={`mailto:${SUPPORT_EMAIL}?subject=Dudas%20sobre%20TopCodes`} className="fixed bottom-6 left-6 z-50 bg-white border border-slate-200 text-slate-600 p-4 rounded-full shadow-xl hover:scale-105 hover:text-black transition-all flex items-center gap-3 group">
+        <Mail size={20} />
+        <span className="text-[10px] font-black uppercase tracking-widest hidden group-hover:block transition-all mr-2">Contacto</span>
+      </a>
+
       <div className="flex flex-col justify-center w-full lg:w-1/2 bg-black text-white p-8 sm:p-16 lg:p-24 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-10 opacity-10"><Crown size={250} className="lg:w-[400px] lg:h-[400px]"/></div>
         <div className="relative z-10">
@@ -327,7 +334,6 @@ function DashboardLayout({ user }) {
   if (!profile) return <LoadingScreen />;
   
   const publicLink = `${window.location.origin}/${profile.username}`;
-  // 🟢 Enlace de soporte ahora apunta al correo oficial
   const mailtoLink = `mailto:${SUPPORT_EMAIL}?subject=Soporte%20TopCodes%20-%20@${profile.username}`;
 
   return (
@@ -343,7 +349,6 @@ function DashboardLayout({ user }) {
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
         </nav>
         <div className="p-6 border-t border-slate-100 space-y-2">
-          {/* Botón de Email Oficial */}
           <a href={mailtoLink} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-black hover:bg-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
             <Mail size={16} /> Soporte
           </a>
@@ -475,14 +480,19 @@ function SupportChatbot({ userName }) {
 // ==========================================
 function TabOverview({ profile, promotions, spotUrl }) {
   const [stats, setStats] = useState({ views: 0, clicks: 0, post24h: 0, projection: '0', topLinks: [] });
+  const [selectedPromo, setSelectedPromo] = useState('all'); // 🟢 Filtro restablecido
 
   useEffect(() => {
-    const totalVistas = profile?.views || 0;
+    const activePromos = selectedPromo === 'all' ? promotions : promotions.filter(p => p.id === selectedPromo);
+    
+    // Vistas del perfil solo aplican a 'all'
+    const totalVistas = selectedPromo === 'all' ? (profile?.views || 0) : 'N/A';
+    
     let totalClics = 0; 
     let totalProjValue = 0; 
     let hasMoney = false;
 
-    promotions.forEach(promo => {
+    activePromos.forEach(promo => {
       const clicks = promo.stats?.totalClicks || 0; 
       totalClics += clicks;
       
@@ -495,7 +505,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
     });
 
     const simulatedPost24h = Math.floor(totalClics * 0.65);
-    const sortedLinks = [...promotions].sort((a,b) => (b.stats?.totalClicks || 0) - (a.stats?.totalClicks || 0)).slice(0, 4);
+    const sortedLinks = [...activePromos].sort((a,b) => (b.stats?.totalClicks || 0) - (a.stats?.totalClicks || 0)).slice(0, 4);
 
     setStats({ 
       views: totalVistas, 
@@ -504,7 +514,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
       projection: hasMoney ? `$${totalProjValue.toFixed(2)}` : 'N/A',
       topLinks: sortedLinks
     });
-  }, [profile, promotions]);
+  }, [profile, promotions, selectedPromo]);
 
   const chartData = Array.from({ length: 14 }, (_, i) => {
     const day = i + 1; 
@@ -530,13 +540,28 @@ function TabOverview({ profile, promotions, spotUrl }) {
           <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic mb-1">Business Analytics</h1>
           <p className="text-slate-500 font-bold text-sm">Dashboard de rendimiento profesional para renovar contratos.</p>
         </div>
-        <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm shrink-0">
-          <div className="px-4 hidden sm:block">
-            <p className="text-[9px] font-black uppercase text-slate-400 mb-0.5">Link de tu Spot</p>
-            <p className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{spotUrl}</p>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          {/* 🟢 Menú desplegable para filtrar por marca */}
+          <select
+             className="w-full sm:w-auto bg-white border border-slate-100 shadow-sm text-xs font-black uppercase tracking-widest text-slate-600 outline-none px-4 py-3 rounded-2xl cursor-pointer"
+             value={selectedPromo}
+             onChange={(e) => setSelectedPromo(e.target.value)}
+          >
+             <option value="all">Todo el Portafolio</option>
+             {promotions.map(p => (
+               <option key={p.id} value={p.id}>{p.brandName} {p.type === 'link' ? '(Link)' : ''}</option>
+             ))}
+          </select>
+          <div className="bg-white p-2 rounded-2xl flex items-center gap-3 border border-slate-100 shadow-sm shrink-0 w-full sm:w-auto justify-between">
+            <div className="px-4 hidden sm:block">
+              <p className="text-[9px] font-black uppercase text-slate-400 mb-0.5">Link de tu Spot</p>
+              <p className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{spotUrl}</p>
+            </div>
+            <div className="flex gap-2">
+                <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')} title="Ver Spot Público"><Eye size={16} className="text-slate-600"/></button>
+                <button className="p-3 bg-black text-[#d1ff64] hover:bg-zinc-800 rounded-xl transition-colors" onClick={() => {navigator.clipboard.writeText(spotUrl); alert('Copiado!');}} title="Copiar link"><Copy size={16}/></button>
+            </div>
           </div>
-          <button className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors" onClick={() => window.open(spotUrl, '_blank')} title="Ver Spot Público"><Eye size={16} className="text-slate-600"/></button>
-          <button className="p-3 bg-black text-[#d1ff64] hover:bg-zinc-800 rounded-xl transition-colors" onClick={() => {navigator.clipboard.writeText(spotUrl); alert('Copiado!');}} title="Copiar link"><Copy size={16}/></button>
         </div>
       </div>
 
