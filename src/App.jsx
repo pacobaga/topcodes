@@ -510,18 +510,20 @@ function TabOverview({ profile, promotions, spotUrl }) {
       views: totalVistas, 
       clicks: totalClics, 
       post24h: simulatedPost24h, 
-      projection: hasMoney ? `$${totalProjValue.toLocaleString(undefined, {minimumFractionDigits: 2})}` : 'N/A',
+      // 🟢 Formato de dinero a 'en-US' para comas de miles
+      projection: hasMoney ? `$${Number(totalProjValue).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'N/A',
       topLinks: sortedLinks
     });
   }, [profile, promotions, selectedPromo]);
 
-  // 🟢 Gráfico Dinámico: Calculando las fechas de los últimos 14 días reales
-  const chartData = Array.from({ length: 14 }, (_, i) => {
+  // 🟢 Gráfico Dinámico: Calculando las fechas de los últimos 28 días reales
+  const chartData = Array.from({ length: 28 }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (13 - i));
+    d.setDate(d.getDate() - (27 - i));
     const dayStr = d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-    let base = stats.clicks > 0 ? (stats.clicks / 14) : 0;
-    if(i === 0 || i === 6) base = base * 2.5;
+    let base = stats.clicks > 0 ? (stats.clicks / 28) : 0;
+    // Picos simulados cada 7 días para hacerlo orgánico
+    if(i === 0 || i === 7 || i === 14 || i === 21) base = base * 2.5;
     return { 
       name: dayStr, 
       clics: Math.max(0, Math.floor(base + (Math.random() * (stats.clicks > 0 ? 5 : 0)))) 
@@ -569,17 +571,18 @@ function TabOverview({ profile, promotions, spotUrl }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2"><Eye size={14} className="text-[#8b5cf6]"/> Vistas del Spot</p>
-          <p className="text-4xl font-black">{stats.views.toLocaleString()}</p>
+          {/* 🟢 Forzar separador de miles con 'en-US' */}
+          <p className="text-4xl font-black">{stats.views === 'N/A' ? 'N/A' : Number(stats.views).toLocaleString('en-US')}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2"><MousePointer2 size={14} className="text-blue-500"/> Clics Totales</p>
-          <p className="text-4xl font-black">{stats.clicks.toLocaleString()}</p>
+          <p className="text-4xl font-black">{Number(stats.clicks).toLocaleString('en-US')}</p>
         </div>
         
         <div className="bg-black text-white p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
           <div className="absolute -right-4 -top-4 opacity-10"><Clock size={100}/></div>
           <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2 relative z-10"><Clock size={14} className="text-[#d1ff64]"/> Valor Post-24h</p>
-          <p className="text-4xl font-black text-[#d1ff64] relative z-10">+{stats.post24h.toLocaleString()}</p>
+          <p className="text-4xl font-black text-[#d1ff64] relative z-10">+{Number(stats.post24h).toLocaleString('en-US')}</p>
           <p className="text-[9px] font-bold text-slate-400 mt-2 relative z-10">Clics salvados tras expirar tu Story.</p>
         </div>
 
@@ -590,13 +593,12 @@ function TabOverview({ profile, promotions, spotUrl }) {
         </div>
       </div>
 
-      {/* 🟢 CONTENEDOR GRID REPARADO */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* GRÁFICO (Ocupa 2 columnas en Desktop) */}
+        {/* GRÁFICO */}
         <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Tráfico de Retención (Últimos 14 Días)</h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Tráfico de Retención (Últimos 28 Días)</h3>
             <span className="bg-slate-50 px-3 py-1 rounded-lg text-[10px] font-black text-slate-400 uppercase">General</span>
           </div>
           <div className="h-64 w-full">
@@ -613,11 +615,11 @@ function TabOverview({ profile, promotions, spotUrl }) {
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tickFormatter={(value) => value.toLocaleString()}
+                  tickFormatter={(value) => Number(value).toLocaleString('en-US')}
                   tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} 
                 />
                 <Tooltip 
-                  formatter={(value) => [value.toLocaleString(), "Clics"]}
+                  formatter={(value) => [Number(value).toLocaleString('en-US'), "Clics"]}
                   contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} 
                 />
                 <Area type="monotone" dataKey="clics" stroke="#000" strokeWidth={3} fillOpacity={1} fill="url(#colorClics)" />
@@ -626,7 +628,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
           </div>
         </div>
 
-        {/* MAPA GEO (Ocupa 1 columna en Desktop) */}
+        {/* MAPA GEO */}
         <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-xl text-white">
           <h3 className="text-sm font-black uppercase tracking-widest text-[#d1ff64] mb-6 flex items-center gap-2"><Globe size={16}/> Distribución Geo</h3>
           <div className="space-y-5">
@@ -679,7 +681,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
                         {link.type === 'link' ? (link.isOwn ? 'Mi Proyecto' : 'Link') : 'Deal'}
                       </span>
                     </td>
-                    <td className="py-4 text-center text-lg font-black">{link.stats?.totalClicks?.toLocaleString() || 0}</td>
+                    <td className="py-4 text-center text-lg font-black">{Number(link.stats?.totalClicks || 0).toLocaleString('en-US')}</td>
                     <td className="py-4 text-right pr-2">
                       <button onClick={() => window.open(link.trackedUrl, '_blank')} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg transition-colors inline-block">
                         <ArrowUpRight size={16}/>
@@ -878,23 +880,23 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
           </form>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promotions.map(promo => (
             <div key={promo.id} className={`bg-white p-6 rounded-[2rem] border shadow-sm flex items-center justify-between group ${promo.isHero ? 'border-yellow-400 bg-yellow-50/10' : 'border-slate-100'} ${promo.type === 'link' ? 'bg-slate-50' : ''}`}>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 overflow-hidden">
                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-sm relative overflow-hidden shrink-0 border border-slate-100">
                     {promo.logoUrl ? <img key={promo.logoUrl} src={promo.logoUrl} className="w-full h-full object-cover p-2 relative z-10"/> : null}
                     <span className="absolute inset-0 flex items-center justify-center text-slate-400">{promo.brandName ? promo.brandName[0]?.toUpperCase() : '?'}</span>
                  </div>
-                 <div>
-                    <h4 className="font-black text-sm leading-none mb-1 flex items-center gap-1">{promo.brandName} {promo.isHero && <Star size={12} className="text-yellow-500 fill-current"/>}</h4>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                 <div className="overflow-hidden">
+                    <h4 className="font-black text-sm leading-none mb-1 flex items-center gap-1 truncate">{promo.brandName} {promo.isHero && <Star size={12} className="text-yellow-500 fill-current shrink-0"/>}</h4>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1 truncate">
                       {promo.type === 'link' ? <span className={`px-2 py-0.5 rounded ${promo.isOwn ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-200 text-slate-500'}`}>LINK {promo.isOwn ? '🌟' : ''}</span> : promo.discount}
                     </p>
                  </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="text-center"><p className="text-xl font-black leading-none">{promo.stats?.totalClicks?.toLocaleString() || 0}</p><p className="text-[8px] font-black text-slate-300 uppercase">Clics</p></div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-center"><p className="text-xl font-black leading-none">{Number(promo.stats?.totalClicks || 0).toLocaleString('en-US')}</p><p className="text-[8px] font-black text-slate-300 uppercase">Clics</p></div>
                 <div className="flex flex-col gap-2 ml-2">
                   <button onClick={() => {setNewPromo({ type: promo.type||'deal', brandName: promo.brandName||'', brandDomain: promo.brandDomain||'', discount: promo.discount||'', code: promo.code||'', originalUrl: promo.originalUrl||'', niche: promo.niche||'', commissionType: promo.commissionType||'%', commissionValue: promo.commissionValue||'', isHero: promo.isHero||false, expiresAt: promo.expiresAt||'', isOwn: promo.isOwn||false }); setEditingId(promo.id); window.scrollTo({top:0, behavior:'smooth'});}} className="p-2.5 text-slate-600 hover:text-white hover:bg-[#8b5cf6] bg-slate-200 rounded-xl transition-all shadow-sm"><Settings size={16}/></button>
                   <button onClick={() => handleDelete(promo.id)} className="p-2.5 text-slate-600 hover:text-white hover:bg-red-500 bg-slate-200 rounded-xl transition-all shadow-sm"><Trash2 size={16}/></button>
@@ -1126,7 +1128,7 @@ function SuperAdmin() {
                         )}
                       </td>
                       <td className="p-6"><span className="bg-slate-100 px-3 py-1 rounded-md text-[9px] uppercase tracking-widest text-slate-600">{u.category||'N/A'}</span></td>
-                      <td className="p-6 text-center font-black text-xl text-[#8b5cf6]">{u.views || 0}</td>
+                      <td className="p-6 text-center font-black text-xl text-[#8b5cf6]">{Number(u.views || 0).toLocaleString('en-US')}</td>
                       <td className="p-6 text-right"><button onClick={() => setSelectedUser(u)} className="px-4 py-2 bg-black text-[#d1ff64] rounded-xl text-[10px] font-black uppercase tracking-widest">Ver Detalles</button></td>
                     </tr>
                   ))}
@@ -1140,12 +1142,12 @@ function SuperAdmin() {
             <button onClick={() => setSelectedUser(null)} className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 hover:text-black mb-4"><ChevronRight className="rotate-180" size={16}/> Volver</button>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><h3 className="text-lg font-black uppercase italic mb-6">Perfil: @{selectedUser.username}</h3><form onSubmit={handleUpdateUserProfile} className="space-y-4"><div><label className="text-[10px] font-black uppercase text-slate-400">Nicho</label><input type="text" className="w-full bg-slate-50 rounded-xl p-3 text-sm font-bold border-none" value={selectedUser.category} onChange={e=>setSelectedUser({...selectedUser, category: e.target.value})}/></div><button type="submit" className="w-full bg-blue-500 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest mt-4">Guardar</button></form></div>
-              <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><h3 className="text-lg font-black uppercase italic mb-6">Contenido Activo</h3><div className="space-y-3">{allPromos.filter(p => p.ownerId === selectedUser.uid).map(promo => (<div key={promo.id} className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100"><div className="flex items-center gap-4"><div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden border border-slate-100">{promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover p-1"/> : <span className="font-black text-xs">{promo.brandName?.[0]}</span>}</div><div><p className="font-black text-sm">{promo.brandName} {promo.isHero && <Star size={10} className="inline text-yellow-500 fill-current"/>}</p><p className="text-[9px] font-bold uppercase text-slate-400">{promo.type === 'link' ? '🔗 LINK' : `💰 ${promo.discount}`} | Clics: {promo.stats?.totalClicks || 0}</p></div></div><a href={promo.trackedUrl} target="_blank" className="p-2 text-slate-400 hover:text-blue-500 bg-white rounded-lg shadow-sm"><ExternalLink size={14}/></a></div>))}</div></div>
+              <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><h3 className="text-lg font-black uppercase italic mb-6">Contenido Activo</h3><div className="space-y-3">{allPromos.filter(p => p.ownerId === selectedUser.uid).map(promo => (<div key={promo.id} className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100"><div className="flex items-center gap-4"><div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden border border-slate-100">{promo.logoUrl ? <img src={promo.logoUrl} className="w-full h-full object-cover p-1"/> : <span className="font-black text-xs">{promo.brandName?.[0]}</span>}</div><div><p className="font-black text-sm">{promo.brandName} {promo.isHero && <Star size={10} className="inline text-yellow-500 fill-current"/>}</p><p className="text-[9px] font-bold uppercase text-slate-400">{promo.type === 'link' ? '🔗 LINK' : `💰 ${promo.discount}`} | Clics: {Number(promo.stats?.totalClicks || 0).toLocaleString('en-US')}</p></div></div><a href={promo.trackedUrl} target="_blank" className="p-2 text-slate-400 hover:text-blue-500 bg-white rounded-lg shadow-sm"><ExternalLink size={14}/></a></div>))}</div></div>
             </div>
           </div>
         )}
         {activeTab === 'finanzas' && (
-          <div className="space-y-8"><h2 className="text-2xl font-black uppercase italic mb-2">Platform Economics</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tráfico Consolidado</p><p className="text-5xl font-black italic">{globalStats.views.toLocaleString()}</p></div><div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Clics Redirigidos</p><p className="text-5xl font-black italic text-[#8b5cf6]">{globalStats.clicks.toLocaleString()}</p></div><div className="bg-black p-8 rounded-[2.5rem] shadow-2xl"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Ventas Proyectadas</p><p className="text-5xl font-black italic text-[#d1ff64]">${globalStats.projRevenue.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</p></div></div></div>
+          <div className="space-y-8"><h2 className="text-2xl font-black uppercase italic mb-2">Platform Economics</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tráfico Consolidado</p><p className="text-5xl font-black italic">{Number(globalStats.views).toLocaleString('en-US')}</p></div><div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Clics Redirigidos</p><p className="text-5xl font-black italic text-[#8b5cf6]">{Number(globalStats.clicks).toLocaleString('en-US')}</p></div><div className="bg-black p-8 rounded-[2.5rem] shadow-2xl"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Ventas Proyectadas</p><p className="text-5xl font-black italic text-[#d1ff64]">${Number(globalStats.projRevenue).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</p></div></div></div>
         )}
       </main>
     </div>
