@@ -17,7 +17,8 @@ import {
   Settings, Users, Activity, BarChart3, Image as ImageIcon, Lock, 
   ChevronRight, AlertCircle, Globe, Smartphone, MousePointer2, TrendingUp, CheckCircle,
   Youtube, Twitter, Music, Mail, Code, MessageCircle, X, Send,
-  Star, Timer, Bell, Crown, Clock, CheckCircle2, Award, ArrowUpRight
+  Star, Timer, Bell, Crown, Clock, CheckCircle2, Award, ArrowUpRight,
+  Twitch, Headphones 
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
 
@@ -46,7 +47,8 @@ const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología
 // 2. CONFIGURACIÓN DE MARCA (LOGO Y CONTACTO)
 // ==========================================
 const BRAND_LOGO_URL = ""; 
-const SUPPORT_EMAIL = "contacto@topcodes.lat"; // 🟢 Correo corporativo oficial
+const SUPPORT_EMAIL = "contacto@topcodes.lat"; 
+const BASE_DOMAIN = "https://topcodes.lat"; // 🟢 Dominio oficial forzado
 
 const BrandLogo = ({ size = 32, className = "" }) => {
   if (BRAND_LOGO_URL) {
@@ -215,7 +217,6 @@ function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 font-sans relative">
       
-      {/* 🟢 BOTÓN DE CONTACTO FLOTANTE */}
       <a href={`mailto:${SUPPORT_EMAIL}?subject=Dudas%20sobre%20TopCodes`} className="fixed bottom-6 left-6 z-50 bg-white border border-slate-200 text-slate-600 p-4 rounded-full shadow-xl hover:scale-105 hover:text-black transition-all flex items-center gap-3 group">
         <Mail size={20} />
         <span className="text-[10px] font-black uppercase tracking-widest hidden group-hover:block transition-all mr-2">Contacto</span>
@@ -333,7 +334,7 @@ function DashboardLayout({ user }) {
 
   if (!profile) return <LoadingScreen />;
   
-  const publicLink = `${window.location.origin}/${profile.username}`;
+  const publicLink = `${BASE_DOMAIN}/${profile.username}`;
   const mailtoLink = `mailto:${SUPPORT_EMAIL}?subject=Soporte%20TopCodes%20-%20@${profile.username}`;
 
   return (
@@ -391,7 +392,7 @@ function DemoDashboardLayout() {
   const [activeTab, setActiveTab] = useState('overview'); 
   const profile = DEMO_PROFILE;
   const promotions = DEMO_PROMOTIONS;
-  const publicLink = `${window.location.origin}/demo`;
+  const publicLink = `${BASE_DOMAIN}/demo`;
   const mailtoLink = `mailto:${SUPPORT_EMAIL}?subject=Dudas%20sobre%20el%20Demo`;
 
   return (
@@ -480,12 +481,10 @@ function SupportChatbot({ userName }) {
 // ==========================================
 function TabOverview({ profile, promotions, spotUrl }) {
   const [stats, setStats] = useState({ views: 0, clicks: 0, post24h: 0, projection: '0', topLinks: [] });
-  const [selectedPromo, setSelectedPromo] = useState('all'); // 🟢 Filtro restablecido
+  const [selectedPromo, setSelectedPromo] = useState('all'); 
 
   useEffect(() => {
     const activePromos = selectedPromo === 'all' ? promotions : promotions.filter(p => p.id === selectedPromo);
-    
-    // Vistas del perfil solo aplican a 'all'
     const totalVistas = selectedPromo === 'all' ? (profile?.views || 0) : 'N/A';
     
     let totalClics = 0; 
@@ -511,17 +510,20 @@ function TabOverview({ profile, promotions, spotUrl }) {
       views: totalVistas, 
       clicks: totalClics, 
       post24h: simulatedPost24h, 
-      projection: hasMoney ? `$${totalProjValue.toFixed(2)}` : 'N/A',
+      projection: hasMoney ? `$${totalProjValue.toLocaleString(undefined, {minimumFractionDigits: 2})}` : 'N/A',
       topLinks: sortedLinks
     });
   }, [profile, promotions, selectedPromo]);
 
+  // 🟢 Gráfico Dinámico: Calculando las fechas de los últimos 14 días reales
   const chartData = Array.from({ length: 14 }, (_, i) => {
-    const day = i + 1; 
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const dayStr = d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
     let base = stats.clicks > 0 ? (stats.clicks / 14) : 0;
-    if(day === 1 || day === 7) base = base * 2.5;
+    if(i === 0 || i === 6) base = base * 2.5;
     return { 
-      name: `D${day}`, 
+      name: dayStr, 
       clics: Math.max(0, Math.floor(base + (Math.random() * (stats.clicks > 0 ? 5 : 0)))) 
     };
   });
@@ -541,7 +543,6 @@ function TabOverview({ profile, promotions, spotUrl }) {
           <p className="text-slate-500 font-bold text-sm">Dashboard de rendimiento profesional para renovar contratos.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          {/* 🟢 Menú desplegable para filtrar por marca */}
           <select
              className="w-full sm:w-auto bg-white border border-slate-100 shadow-sm text-xs font-black uppercase tracking-widest text-slate-600 outline-none px-4 py-3 rounded-2xl cursor-pointer"
              value={selectedPromo}
@@ -568,17 +569,17 @@ function TabOverview({ profile, promotions, spotUrl }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2"><Eye size={14} className="text-[#8b5cf6]"/> Vistas del Spot</p>
-          <p className="text-4xl font-black">{stats.views}</p>
+          <p className="text-4xl font-black">{stats.views.toLocaleString()}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2"><MousePointer2 size={14} className="text-blue-500"/> Clics Totales</p>
-          <p className="text-4xl font-black">{stats.clicks}</p>
+          <p className="text-4xl font-black">{stats.clicks.toLocaleString()}</p>
         </div>
         
         <div className="bg-black text-white p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
           <div className="absolute -right-4 -top-4 opacity-10"><Clock size={100}/></div>
           <p className="text-[10px] font-black uppercase text-slate-400 mb-2 flex items-center gap-2 relative z-10"><Clock size={14} className="text-[#d1ff64]"/> Valor Post-24h</p>
-          <p className="text-4xl font-black text-[#d1ff64] relative z-10">+{stats.post24h}</p>
+          <p className="text-4xl font-black text-[#d1ff64] relative z-10">+{stats.post24h.toLocaleString()}</p>
           <p className="text-[9px] font-bold text-slate-400 mt-2 relative z-10">Clics salvados tras expirar tu Story.</p>
         </div>
 
@@ -589,16 +590,18 @@ function TabOverview({ profile, promotions, spotUrl }) {
         </div>
       </div>
 
+      {/* 🟢 CONTENEDOR GRID REPARADO */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
+        {/* GRÁFICO (Ocupa 2 columnas en Desktop) */}
         <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Tráfico de Retención (14 Días)</h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Tráfico de Retención (Últimos 14 Días)</h3>
             <span className="bg-slate-50 px-3 py-1 rounded-lg text-[10px] font-black text-slate-400 uppercase">General</span>
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorClics" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#d1ff64" stopOpacity={0.8}/>
@@ -607,14 +610,23 @@ function TabOverview({ profile, promotions, spotUrl }) {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} />
-                <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tickFormatter={(value) => value.toLocaleString()}
+                  tick={{fontSize: 10, fill: '#94a3b8', fontWeight: 'bold'}} 
+                />
+                <Tooltip 
+                  formatter={(value) => [value.toLocaleString(), "Clics"]}
+                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', fontWeight: 'bold', fontSize: '12px'}} 
+                />
                 <Area type="monotone" dataKey="clics" stroke="#000" strokeWidth={3} fillOpacity={1} fill="url(#colorClics)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
+        {/* MAPA GEO (Ocupa 1 columna en Desktop) */}
         <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-xl text-white">
           <h3 className="text-sm font-black uppercase tracking-widest text-[#d1ff64] mb-6 flex items-center gap-2"><Globe size={16}/> Distribución Geo</h3>
           <div className="space-y-5">
@@ -636,6 +648,7 @@ function TabOverview({ profile, promotions, spotUrl }) {
         </div>
       </div>
 
+      {/* TOP LINKS */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
         <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 mb-6 flex items-center gap-2"><Award size={18} className="text-yellow-500"/> Top Performing Links</h3>
         
@@ -662,11 +675,11 @@ function TabOverview({ profile, promotions, spotUrl }) {
                       <span className="truncate max-w-[150px] sm:max-w-[200px]">{link.brandName}</span>
                     </td>
                     <td className="py-4">
-                      <span className={`px-2 py-1 rounded-md text-[9px] uppercase tracking-widest ${link.type === 'link' ? 'bg-slate-100 text-slate-500' : 'bg-green-100 text-green-700'}`}>
-                        {link.type === 'link' ? 'Link' : 'Deal'}
+                      <span className={`px-2 py-1 rounded-md text-[9px] uppercase tracking-widest ${link.type === 'link' ? (link.isOwn ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500') : 'bg-green-100 text-green-700'}`}>
+                        {link.type === 'link' ? (link.isOwn ? 'Mi Proyecto' : 'Link') : 'Deal'}
                       </span>
                     </td>
-                    <td className="py-4 text-center text-lg font-black">{link.stats?.totalClicks || 0}</td>
+                    <td className="py-4 text-center text-lg font-black">{link.stats?.totalClicks?.toLocaleString() || 0}</td>
                     <td className="py-4 text-right pr-2">
                       <button onClick={() => window.open(link.trackedUrl, '_blank')} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded-lg transition-colors inline-block">
                         <ArrowUpRight size={16}/>
@@ -690,7 +703,7 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
   const [newPromo, setNewPromo] = useState({ 
     type: 'deal', 
     brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', 
-    niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' 
+    niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '', isOwn: false 
   });
   const [editingId, setEditingId] = useState(null); 
   const [msg, setMsg] = useState(''); const [loading, setLoading] = useState(false);
@@ -745,7 +758,7 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'promotions', docRef.id), { ownerId: user.uid, username: profile.username, ...promoData });
         setMsg('✅ Elemento publicado');
       }
-      setNewPromo({ type: 'deal', brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' }); setEditingId(null);
+      setNewPromo({ type: 'deal', brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '', isOwn: false }); setEditingId(null);
       setTimeout(() => setMsg(''), 3000);
     } catch (error) { setMsg(`❌ Error: ${error.message}`); }
     setLoading(false);
@@ -770,7 +783,7 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
                {editingId ? <Settings size={20} className="text-[#8b5cf6]"/> : <Plus size={20}/>} 
                {editingId ? 'Editar Elemento' : 'Nuevo Elemento'}
              </h3>
-             {editingId && <button onClick={()=>{setNewPromo({ type: 'deal', brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '' }); setEditingId(null);}} className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500">Cancelar</button>}
+             {editingId && <button onClick={()=>{setNewPromo({ type: 'deal', brandName: '', brandDomain: '', discount: '', code: '', originalUrl: '', niche: '', commissionType: '%', commissionValue: '', isHero: false, expiresAt: '', isOwn: false }); setEditingId(null);}} className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500">Cancelar</button>}
           </div>
 
           {!editingId && (
@@ -781,9 +794,12 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
               </div>
               <div className="mb-8 p-4 bg-[#faffea] border border-[#d1ff64] rounded-2xl flex items-start gap-3">
                 <Zap className="text-yellow-500 shrink-0 mt-0.5" size={18} />
-                <p className="text-xs font-bold text-slate-700 leading-relaxed">
-                  <strong className="text-black">No te limites a códigos de descuento.</strong> Usa los "Links" para compartir tus propios emprendimientos, reservación de clases (ej. Síclo), links de Airbnb, eventos y más.
-                </p>
+                <div>
+                  <p className="text-xs font-bold text-slate-700 leading-relaxed mb-1">
+                    <strong className="text-black">No te limites a códigos de descuento.</strong> Usa los "Links" para compartir tus propios emprendimientos, reservación de clases (ej. Síclo), links de Airbnb, eventos y más.
+                  </p>
+                  <p className="text-[10px] font-black uppercase text-[#8b5cf6] tracking-widest">💡 Tip: Para redes sociales (Twitch, Spotify) usa la pestaña "Perfil".</p>
+                </div>
               </div>
             </>
           )}
@@ -843,6 +859,18 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
               </div>
             )}
 
+            {newPromo.type === 'link' && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3 animate-in fade-in">
+                <label className="flex items-center gap-3 cursor-pointer w-full">
+                  <input type="checkbox" className="w-5 h-5 accent-black cursor-pointer" checked={newPromo.isOwn} onChange={(e) => setNewPromo({...newPromo, isOwn: e.target.checked})} />
+                  <div>
+                    <span className="font-black text-sm block text-slate-800">Este link es de mi propia marca / proyecto</span>
+                    <span className="text-[10px] text-slate-500 font-bold block">Se destacará de forma especial en tu Spot público.</span>
+                  </div>
+                </label>
+              </div>
+            )}
+
             <button type="submit" disabled={loading} className={`w-full ${editingId ? 'bg-[#8b5cf6] text-white' : (newPromo.type==='deal' ? 'bg-black text-[#d1ff64]' : 'bg-black text-white')} py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-50 hover:scale-[1.01] transition-transform`}>
               {loading ? 'Guardando...' : (editingId ? 'Actualizar' : `Publicar ${newPromo.type === 'deal' ? 'Deal' : 'Link'}`)}
             </button>
@@ -861,15 +889,15 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
                  <div>
                     <h4 className="font-black text-sm leading-none mb-1 flex items-center gap-1">{promo.brandName} {promo.isHero && <Star size={12} className="text-yellow-500 fill-current"/>}</h4>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
-                      {promo.type === 'link' ? <span className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded">LINK</span> : promo.discount}
+                      {promo.type === 'link' ? <span className={`px-2 py-0.5 rounded ${promo.isOwn ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-200 text-slate-500'}`}>LINK {promo.isOwn ? '🌟' : ''}</span> : promo.discount}
                     </p>
                  </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="text-center"><p className="text-xl font-black leading-none">{promo.stats?.totalClicks || 0}</p><p className="text-[8px] font-black text-slate-300 uppercase">Clics</p></div>
-                <div className="flex flex-col gap-1">
-                  <button onClick={() => {setNewPromo({ type: promo.type||'deal', brandName: promo.brandName||'', brandDomain: promo.brandDomain||'', discount: promo.discount||'', code: promo.code||'', originalUrl: promo.originalUrl||'', niche: promo.niche||'', commissionType: promo.commissionType||'%', commissionValue: promo.commissionValue||'', isHero: promo.isHero||false, expiresAt: promo.expiresAt||'' }); setEditingId(promo.id); window.scrollTo({top:0, behavior:'smooth'});}} className="p-2 text-slate-300 hover:text-[#8b5cf6] bg-slate-50 rounded-lg"><Settings size={14}/></button>
-                  <button onClick={() => handleDelete(promo.id)} className="p-2 text-slate-300 hover:text-red-500 bg-slate-50 rounded-lg"><Trash2 size={14}/></button>
+                <div className="text-center"><p className="text-xl font-black leading-none">{promo.stats?.totalClicks?.toLocaleString() || 0}</p><p className="text-[8px] font-black text-slate-300 uppercase">Clics</p></div>
+                <div className="flex flex-col gap-2 ml-2">
+                  <button onClick={() => {setNewPromo({ type: promo.type||'deal', brandName: promo.brandName||'', brandDomain: promo.brandDomain||'', discount: promo.discount||'', code: promo.code||'', originalUrl: promo.originalUrl||'', niche: promo.niche||'', commissionType: promo.commissionType||'%', commissionValue: promo.commissionValue||'', isHero: promo.isHero||false, expiresAt: promo.expiresAt||'', isOwn: promo.isOwn||false }); setEditingId(promo.id); window.scrollTo({top:0, behavior:'smooth'});}} className="p-2.5 text-slate-600 hover:text-white hover:bg-[#8b5cf6] bg-slate-200 rounded-xl transition-all shadow-sm"><Settings size={16}/></button>
+                  <button onClick={() => handleDelete(promo.id)} className="p-2.5 text-slate-600 hover:text-white hover:bg-red-500 bg-slate-200 rounded-xl transition-all shadow-sm"><Trash2 size={16}/></button>
                 </div>
               </div>
             </div>
@@ -881,13 +909,34 @@ function TabPromotions({ user, profile, promotions, isDemo }) {
 }
 
 // ==========================================
-// PESTAÑA: PROFILE
+// PESTAÑA: PROFILE (Redes Dinámicas y Custom Link)
 // ==========================================
 function TabProfile({ user, profile, isDemo }) {
-  const [formData, setFormData] = useState({ bio: profile.bio || '', photoUrl: profile.photoUrl || '', tiktokUrl: profile.tiktokUrl || '', youtubeUrl: profile.youtubeUrl || '', xUrl: profile.xUrl || '' });
-  const [msg, setMsg] = useState(''); const [uploading, setUploading] = useState(false);
+  const [formData, setFormData] = useState({ 
+    bio: profile.bio || '', 
+    photoUrl: profile.photoUrl || '', 
+    tiktokUrl: profile.tiktokUrl || '', 
+    youtubeUrl: profile.youtubeUrl || '', 
+    xUrl: profile.xUrl || '',
+    twitchUrl: profile.twitchUrl || '',
+    spotifyUrl: profile.spotifyUrl || '',
+    customUrl: profile.customUrl || ''
+  });
+  const [msg, setMsg] = useState(''); 
+  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => { setFormData({ bio: profile.bio || '', photoUrl: profile.photoUrl || '', tiktokUrl: profile.tiktokUrl || '', youtubeUrl: profile.youtubeUrl || '', xUrl: profile.xUrl || '' }); }, [profile]);
+  useEffect(() => { 
+    setFormData({ 
+      bio: profile.bio || '', 
+      photoUrl: profile.photoUrl || '', 
+      tiktokUrl: profile.tiktokUrl || '', 
+      youtubeUrl: profile.youtubeUrl || '', 
+      xUrl: profile.xUrl || '',
+      twitchUrl: profile.twitchUrl || '',
+      spotifyUrl: profile.spotifyUrl || '',
+      customUrl: profile.customUrl || ''
+    }); 
+  }, [profile]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -929,16 +978,66 @@ function TabProfile({ user, profile, isDemo }) {
   };
 
   return (
-    <div className="max-w-2xl bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in">
+    <div className="max-w-3xl bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in">
       <h2 className="text-2xl font-black uppercase italic mb-8 flex items-center gap-3"><Settings size={24}/> Ajustes de Perfil</h2>
       {msg && <div className="p-4 rounded-2xl text-xs font-bold mb-8 bg-green-50 text-green-600">{msg}</div>}
       <form onSubmit={handleSave} className="space-y-8">
-        <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Identidad Base</p><p className="text-lg font-black text-black italic">@{profile.username}</p></div>
+        
+        <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+           <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Identidad Base</p>
+           <p className="text-lg font-black text-black italic">@{profile.username}</p>
+        </div>
+
         <div className="space-y-3 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2"><ImageIcon size={14}/> Foto de Perfil</label>
-          <div className="flex items-center gap-6"><div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">{formData.photoUrl ? <img src={formData.photoUrl} className="w-full h-full object-cover" /> : <User size={40} className="text-slate-300" />}</div><label className={`cursor-pointer bg-black text-[#d1ff64] px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg ${uploading ? 'opacity-50' : ''}`}>{uploading ? 'Subiendo...' : 'Subir Foto'}<input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} /></label></div>
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+               {formData.photoUrl ? <img src={formData.photoUrl} className="w-full h-full object-cover" /> : <User size={40} className="text-slate-300" />}
+            </div>
+            <label className={`cursor-pointer bg-black text-[#d1ff64] px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg ${uploading ? 'opacity-50' : ''}`}>
+               {uploading ? 'Subiendo...' : 'Subir Foto'}
+               <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
+            </label>
+          </div>
         </div>
-        <textarea rows="4" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none resize-none focus:ring-2 focus:ring-[#d1ff64]" placeholder="Biografía corta" value={formData.bio} onChange={e=>setFormData({...formData, bio: e.target.value})}></textarea>
+
+        <textarea rows="3" className="w-full bg-slate-50 border-none rounded-2xl p-5 text-sm font-bold outline-none resize-none focus:ring-2 focus:ring-[#d1ff64]" placeholder="Biografía corta" value={formData.bio} onChange={e=>setFormData({...formData, bio: e.target.value})}></textarea>
+
+        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+          <div className="mb-4">
+             <p className="text-[10px] font-black uppercase text-slate-400">Hub de Redes Sociales</p>
+             <p className="text-xs font-bold text-slate-500 mt-1">Los campos que dejes vacíos no aparecerán en tu Spot público.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center bg-white rounded-xl px-4 border border-slate-200 focus-within:border-black transition-colors">
+               <Music size={16} className="text-black shrink-0" />
+               <input type="url" placeholder="TikTok URL" className="w-full bg-transparent border-none p-3 text-sm font-bold outline-none" value={formData.tiktokUrl} onChange={e=>setFormData({...formData, tiktokUrl: e.target.value})}/>
+            </div>
+            <div className="flex items-center bg-white rounded-xl px-4 border border-slate-200 focus-within:border-black transition-colors">
+               <Youtube size={16} className="text-red-500 shrink-0" />
+               <input type="url" placeholder="YouTube URL" className="w-full bg-transparent border-none p-3 text-sm font-bold outline-none" value={formData.youtubeUrl} onChange={e=>setFormData({...formData, youtubeUrl: e.target.value})}/>
+            </div>
+            <div className="flex items-center bg-white rounded-xl px-4 border border-slate-200 focus-within:border-black transition-colors">
+               <Twitch size={16} className="text-purple-500 shrink-0" />
+               <input type="url" placeholder="Twitch URL" className="w-full bg-transparent border-none p-3 text-sm font-bold outline-none" value={formData.twitchUrl} onChange={e=>setFormData({...formData, twitchUrl: e.target.value})}/>
+            </div>
+            <div className="flex items-center bg-white rounded-xl px-4 border border-slate-200 focus-within:border-black transition-colors">
+               <Twitter size={16} className="text-blue-400 shrink-0" />
+               <input type="url" placeholder="X (Twitter) URL" className="w-full bg-transparent border-none p-3 text-sm font-bold outline-none" value={formData.xUrl} onChange={e=>setFormData({...formData, xUrl: e.target.value})}/>
+            </div>
+            <div className="flex items-center bg-white rounded-xl px-4 border border-slate-200 focus-within:border-black transition-colors">
+               <Headphones size={16} className="text-green-500 shrink-0" />
+               <input type="url" placeholder="Spotify / Podcast URL" className="w-full bg-transparent border-none p-3 text-sm font-bold outline-none" value={formData.spotifyUrl} onChange={e=>setFormData({...formData, spotifyUrl: e.target.value})}/>
+            </div>
+            
+            <div className="flex items-center bg-white rounded-xl px-4 border border-slate-200 focus-within:border-black transition-colors">
+               <Globe size={16} className="text-slate-400 shrink-0" />
+               <input type="url" placeholder="Otro enlace (Blog, Pinterest...)" className="w-full bg-transparent border-none p-3 text-sm font-bold outline-none" value={formData.customUrl} onChange={e=>setFormData({...formData, customUrl: e.target.value})}/>
+            </div>
+          </div>
+        </div>
+
         <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.01] transition-transform">Guardar Cambios</button>
       </form>
     </div>
@@ -1063,29 +1162,27 @@ const DEMO_PROFILE = {
   cities: 'TopCodes HQ',
   bio: '¡Hola! ⚡️ Soy TopBot. Este es un Spot de demostración para que descubras cómo lucirá tu imperio digital cuando te unas a la elite. 👇',
   photoUrl: 'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=250&q=80',
-  tiktokUrl: 'https://tiktok.com',
-  youtubeUrl: 'https://youtube.com',
-  instagramUrl: 'https://instagram.com'
+  tiktokUrl: 'https://tiktok.com/@topbot',
+  youtubeUrl: 'https://youtube.com/@topbot',
+  xUrl: 'https://x.com/topbot',
+  twitchUrl: 'https://twitch.tv/topbot',
+  spotifyUrl: 'https://spotify.com/topbot',
+  customUrl: 'https://pinterest.com/topbot' 
 };
 
 const DEMO_PROMOTIONS = [
   { id: 'd1', type: 'deal', isHero: true, brandName: 'Sephora', discount: '20% OFF en toda la tienda', code: 'TOPBOT20', brandDomain: 'sephora.com.mx', logoUrl: 'https://www.google.com/s2/favicons?domain=sephora.com.mx&sz=256', originalUrl: '#', expiresAt: new Date(Date.now() + 86400000).toISOString().slice(0, 16), stats: { totalClicks: 3420 } },
-  { id: 'l1', type: 'link', brandName: 'Reserva mi clase en Síclo 🚴‍♀️', brandDomain: 'siclo.com', logoUrl: 'https://www.google.com/s2/favicons?domain=siclo.com&sz=256', originalUrl: '#', stats: { totalClicks: 1240 } },
-  { id: 'l2', type: 'link', brandName: 'Escucha mi Podcast en Spotify 🎙️', brandDomain: 'spotify.com', logoUrl: 'https://www.google.com/s2/favicons?domain=spotify.com&sz=256', originalUrl: '#', stats: { totalClicks: 850 } },
-  { id: 'l3', type: 'link', brandName: 'Mi E-Book: Creadores 2026 📖', brandDomain: 'amazon.com', logoUrl: 'https://www.google.com/s2/favicons?domain=amazon.com&sz=256', originalUrl: '#', stats: { totalClicks: 530 } },
+  { id: 'l1', type: 'link', isOwn: true, brandName: 'Reserva mi clase en Síclo 🚴‍♀️', brandDomain: 'siclo.com', logoUrl: 'https://www.google.com/s2/favicons?domain=siclo.com&sz=256', originalUrl: '#', stats: { totalClicks: 1240 } },
+  { id: 'l2', type: 'link', isOwn: true, brandName: 'Escucha mi Podcast en Spotify 🎙️', brandDomain: 'spotify.com', logoUrl: 'https://www.google.com/s2/favicons?domain=spotify.com&sz=256', originalUrl: '#', stats: { totalClicks: 850 } },
+  { id: 'l3', type: 'link', isOwn: true, brandName: 'Mi E-Book: Creadores 2026 📖', brandDomain: 'amazon.com', logoUrl: 'https://www.google.com/s2/favicons?domain=amazon.com&sz=256', originalUrl: '#', stats: { totalClicks: 530 } },
   { id: 'd2', type: 'deal', brandName: 'Nike', discount: '15% OFF Tenis', code: 'NIKETOPBOT', brandDomain: 'nike.com', logoUrl: 'https://www.google.com/s2/favicons?domain=nike.com&sz=256', originalUrl: '#', stats: { totalClicks: 2100 } },
   { id: 'd3', type: 'deal', brandName: 'Alo Yoga', discount: '10% OFF Nueva Colección', code: 'ALO10', brandDomain: 'aloyoga.com', logoUrl: 'https://www.google.com/s2/favicons?domain=aloyoga.com&sz=256', originalUrl: '#', stats: { totalClicks: 1850 } },
   { id: 'd4', type: 'deal', brandName: 'Dyson', discount: '15% OFF Airwrap', code: 'DYSONVIP', brandDomain: 'dyson.com.mx', logoUrl: 'https://www.google.com/s2/favicons?domain=dyson.com.mx&sz=256', originalUrl: '#', stats: { totalClicks: 1540 } },
-  { id: 'd5', type: 'deal', brandName: 'MyProtein', discount: '25% OFF Suplementos', code: 'TOPPROTEIN', brandDomain: 'myprotein.com', logoUrl: 'https://www.google.com/s2/favicons?domain=myprotein.com&sz=256', originalUrl: '#', stats: { totalClicks: 1200 } },
-  { id: 'd6', type: 'deal', brandName: 'Lululemon', discount: 'Envío Gratis', code: 'LULUFREE', brandDomain: 'lululemon.com', logoUrl: 'https://www.google.com/s2/favicons?domain=lululemon.com&sz=256', originalUrl: '#', stats: { totalClicks: 980 } },
-  { id: 'd7', type: 'deal', brandName: 'Oura Ring', discount: '10% OFF Smart Ring', code: 'OURABOT', brandDomain: 'ouraring.com', logoUrl: 'https://www.google.com/s2/favicons?domain=ouraring.com&sz=256', originalUrl: '#', stats: { totalClicks: 890 } },
-  { id: 'd8', type: 'deal', brandName: 'ELLAZ', discount: '15% OFF Boob Tape', code: 'ELLAZBOT', brandDomain: 'ellaz.com', logoUrl: 'https://www.google.com/s2/favicons?domain=ellaz.com&sz=256', originalUrl: '#', stats: { totalClicks: 750 } },
-  { id: 'd9', type: 'deal', brandName: 'Uber Eats', discount: '$150 MXN de regalo', code: 'EATSBOT', brandDomain: 'ubereats.com', logoUrl: 'https://www.google.com/s2/favicons?domain=ubereats.com&sz=256', originalUrl: '#', stats: { totalClicks: 620 } },
-  { id: 'd10', type: 'deal', brandName: 'Kiko Milano', discount: '20% OFF Makeup', code: 'KIKO20', brandDomain: 'kikocosmetics.com', logoUrl: 'https://www.google.com/s2/favicons?domain=kikocosmetics.com&sz=256', originalUrl: '#', stats: { totalClicks: 500 } }
+  { id: 'd5', type: 'deal', brandName: 'MyProtein', discount: '25% OFF Suplementos', code: 'TOPPROTEIN', brandDomain: 'myprotein.com', logoUrl: 'https://www.google.com/s2/favicons?domain=myprotein.com&sz=256', originalUrl: '#', stats: { totalClicks: 1200 } }
 ];
 
 // ==========================================
-// VISTA: THE SPOT PÚBLICO 
+// VISTA: THE SPOT PÚBLICO (Redes Dinámicas)
 // ==========================================
 function PublicSpot() {
   const { username } = useParams();
@@ -1151,6 +1248,11 @@ function PublicSpot() {
   const regularDeals = promotions.filter(p => !p.isHero && p.type !== 'link' && (p.brandName || '').toLowerCase().includes((searchTerm || '').toLowerCase()));
   const standardLinks = promotions.filter(p => p.type === 'link' && (p.brandName || '').toLowerCase().includes((searchTerm || '').toLowerCase()));
 
+  const getCleanDomainForFavicon = (url) => {
+    if (!url) return '';
+    try { return new URL(url).hostname; } catch (e) { return url.replace(/^https?:\/\//, '').split('/')[0]; }
+  };
+
   return (
     <div className="min-h-screen bg-[#fdfdfd] font-sans pb-20 p-6 relative">
       <div className="max-w-5xl mx-auto animate-in slide-in-from-bottom-8 duration-1000 relative z-10">
@@ -1161,10 +1263,29 @@ function PublicSpot() {
           </div>
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic">@{publicProfile.username}</h2>
           <p className="text-sm md:text-base font-bold text-slate-400 mt-4 max-w-lg mx-auto italic">{publicProfile.bio}</p>
-          <div className="flex justify-center gap-3 mt-6">
-            <a href={`https://instagram.com/${publicProfile.username}`} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-pink-600"><Instagram size={20} /></a>
-            {publicProfile.tiktokUrl && <a href={publicProfile.tiktokUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-black"><Music size={20} /></a>}
-            {publicProfile.youtubeUrl && <a href={publicProfile.youtubeUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-red-600"><Youtube size={20} /></a>}
+          
+          <div className="flex justify-center flex-wrap gap-3 mt-6">
+            <a href={`https://instagram.com/${publicProfile.username}`} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-pink-600 flex items-center justify-center w-[46px] h-[46px]" title="Instagram"><Instagram size={20} /></a>
+            
+            {publicProfile.tiktokUrl && <a href={publicProfile.tiktokUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-black flex items-center justify-center w-[46px] h-[46px]" title="TikTok"><Music size={20} /></a>}
+            
+            {publicProfile.youtubeUrl && <a href={publicProfile.youtubeUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-red-600 flex items-center justify-center w-[46px] h-[46px]" title="YouTube"><Youtube size={20} /></a>}
+            
+            {publicProfile.twitchUrl && <a href={publicProfile.twitchUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-purple-600 flex items-center justify-center w-[46px] h-[46px]" title="Twitch"><Twitch size={20} /></a>}
+            
+            {publicProfile.xUrl && <a href={publicProfile.xUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-blue-500 flex items-center justify-center w-[46px] h-[46px]" title="X / Twitter"><Twitter size={20} /></a>}
+            
+            {publicProfile.spotifyUrl && <a href={publicProfile.spotifyUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 text-green-500 flex items-center justify-center w-[46px] h-[46px]" title="Spotify / Podcast"><Headphones size={20} /></a>}
+            
+            {publicProfile.customUrl && (() => {
+              const domain = getCleanDomainForFavicon(publicProfile.customUrl);
+              const favUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=256` : null;
+              return (
+                <a href={publicProfile.customUrl} target="_blank" rel="noopener noreferrer" className="bg-white p-3 rounded-full shadow-sm hover:shadow-md hover:scale-110 transition-all border border-slate-50 flex items-center justify-center w-[46px] h-[46px]" title="Enlace Extra">
+                  {favUrl ? <img src={favUrl} alt="Link" className="w-[20px] h-[20px] object-contain rounded-sm" /> : <Globe size={20} className="text-slate-400" />}
+                </a>
+              );
+            })()}
           </div>
         </header>
 
@@ -1236,12 +1357,17 @@ function PublicSpot() {
             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 mb-6 text-center">Mis Enlaces</h3>
             <div className="space-y-4">
               {standardLinks.map(link => (
-                <button key={link.id} onClick={() => handleClick(link)} className="w-full bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 hover:border-black hover:shadow-md transition-all group active:scale-[0.98]">
-                   <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
+                <button key={link.id} onClick={() => handleClick(link)} className={`w-full p-5 rounded-[2rem] shadow-sm border flex items-center gap-4 hover:border-black hover:shadow-md transition-all group active:scale-[0.98] ${link.isOwn ? 'bg-[#faffea] border-[#d1ff64]' : 'bg-white border-slate-100'}`}>
+                   <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-slate-100 shadow-sm">
                      {link.logoUrl ? <img src={link.logoUrl} className="w-full h-full object-cover p-2"/> : <Link2 size={20} className="text-slate-400"/>}
                    </div>
-                   <span className="flex-1 text-left font-black text-lg text-slate-800 group-hover:text-black transition-colors truncate">{link.brandName}</span>
-                   <div className="w-12 h-12 bg-slate-50 rounded-[1rem] flex items-center justify-center text-slate-400 group-hover:bg-black group-hover:text-[#d1ff64] transition-colors shadow-sm"><ChevronRight size={20}/></div>
+                   <div className="flex-1 text-left overflow-hidden">
+                     <span className="block font-black text-lg text-slate-800 group-hover:text-black transition-colors truncate flex items-center gap-2">
+                       {link.brandName}
+                       {link.isOwn && <span className="bg-black text-[#d1ff64] text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0"><Star size={8} className="inline mr-1 fill-current"/>Mi Proyecto</span>}
+                     </span>
+                   </div>
+                   <div className="w-12 h-12 bg-white rounded-[1rem] flex items-center justify-center text-slate-400 group-hover:bg-black group-hover:text-[#d1ff64] transition-colors shadow-sm border border-slate-50"><ChevronRight size={20}/></div>
                 </button>
               ))}
             </div>
