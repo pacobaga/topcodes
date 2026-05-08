@@ -974,7 +974,8 @@ function PublicSpot() {
   if (!publicProfile) return <LoadingScreen />;
 
   const heroDeal = promotions.find(p => p.isHero && p.type !== 'link');
-  const regularDeals = promotions.filter(p => !p.isHero && p.type !== 'link' && (p.brandName || '').toLowerCase().includes(searchTerm.toLowerCase()));
+  // 🟢 FIX: En lugar de ocultar todos los "isHero", solo ocultamos el que ya se mostró gigante (heroDeal.id), forzando a que los demás sí aparezcan.
+  const regularDeals = promotions.filter(p => p.type !== 'link' && p.id !== heroDeal?.id && (p.brandName || '').toLowerCase().includes(searchTerm.toLowerCase()));
   const standardLinks = promotions.filter(p => p.type === 'link' && (p.brandName || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
   // 🟢 Helper seguro en línea para el dominio custom
