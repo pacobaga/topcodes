@@ -242,13 +242,24 @@ function LandingPage() {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-slate-50">
         <div className="w-full max-w-md bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-2xl border border-slate-100">
-          <div className="flex gap-6 mb-10 border-b border-slate-100">
-            <button onClick={() => setIsLogin(true)} className={`pb-4 font-black uppercase tracking-widest text-xs ${isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300'}`}>
+          
+          {/* 🟢 TABS Y DEMOS RESTAURADOS */}
+          <div className="flex flex-wrap gap-4 sm:gap-6 mb-10 border-b border-slate-100 items-center">
+            <button onClick={() => setIsLogin(true)} className={`pb-4 font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all ${isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300 hover:text-black'}`}>
               Ingresar
             </button>
-            <button onClick={() => setIsLogin(false)} className={`pb-4 font-black uppercase tracking-widest text-xs ${!isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300'}`}>
+            <button onClick={() => setIsLogin(false)} className={`pb-4 font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all ${!isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300 hover:text-black'}`}>
               Crear mi Spot
             </button>
+            
+            <div className="ml-auto flex gap-3">
+              <RouterLink to="/demo" className="pb-4 font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-[#8b5cf6] hover:text-purple-700 transition-all flex items-center gap-1">
+                <Eye size={14}/> Spot Demo
+              </RouterLink>
+              <RouterLink to="/demo/panel" className="pb-4 font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-blue-500 hover:text-blue-700 transition-all flex items-center gap-1">
+                <LayoutDashboard size={14}/> Panel Demo
+              </RouterLink>
+            </div>
           </div>
           
           {error && (
