@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 
-// 🟢 Importamos query y where para la lectura pública de links
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
@@ -24,7 +23,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
 
 // ==========================================
-// 1. CONFIGURACIÓN FIREBASE
+// 1. CONFIGURACIÓN FIREBASE (Protegida)
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBwZyz9UqDCGY7wbO2B2cGPSAkqebx4iV4",
@@ -45,7 +44,7 @@ const appId = 'topcodes-mvp-v1';
 const CATEGORIES = ["Salud y Belleza", "Deportes", "Moda y Estilo", "Tecnología", "Lifestyle", "Viajes", "Fitness", "Gaming"];
 
 // ==========================================
-// 2. CONFIGURACIÓN DE MARCA Y DOMINIO
+// 2. CONFIGURACIÓN DE MARCA (LOGO Y CONTACTO)
 // ==========================================
 const BRAND_LOGO_URL = ""; 
 const SUPPORT_EMAIL = "contacto@topcodes.lat"; 
@@ -59,7 +58,7 @@ const BrandLogo = ({ size = 32, className = "" }) => {
 };
 
 // ==========================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL (ENRUTADOR)
 // ==========================================
 export default function App() {
   const [user, setUser] = useState(undefined);
@@ -121,7 +120,7 @@ function CountdownTimer({ targetDate }) {
 }
 
 // ==========================================
-// VISTA: LANDING PAGE
+// VISTA: LANDING PAGE & AUTENTICACIÓN
 // ==========================================
 function LandingPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -135,11 +134,7 @@ function LandingPage() {
   const [msg, setMsg] = useState('');
 
   const SECRET_CODE_FOUNDERS = 'FOUNDERS26'; 
-  const SECRET_CODE_BETA = 'BETA100'; 
-  
   const isUnlockedFounders = inviteCode.trim().toUpperCase() === SECRET_CODE_FOUNDERS;
-  const isUnlockedBeta = inviteCode.trim().toUpperCase() === SECRET_CODE_BETA;
-  const isUnlocked = isUnlockedFounders || isUnlockedBeta;
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -150,24 +145,32 @@ function LandingPage() {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
         const cleanUser = igUser.replace('@', '').trim().toLowerCase();
-        if (isUnlocked) {
+        
+        // Si ingresa el código Founder, crea la cuenta de inmediato (Bypass de aprobación)
+        if (isUnlockedFounders) {
           const userCheck = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', cleanUser));
           if (userCheck.exists()) throw new Error("Este usuario de IG ya está registrado.");
+
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const uid = userCredential.user.uid;
-          const assignedPlan = isUnlockedFounders ? 'Founder (1 Año Gratis)' : 'Beta 100 (1 Mes Gratis)';
+          
           const profileData = { 
             username: cleanUser, email, category, cities, bio: 'Bienvenido a mi Spot',
             photoUrl: '', views: 0, createdAt: new Date().toISOString(),
-            plan: assignedPlan
+            plan: 'Founder Elite (Prueba 3 Meses)'
           };
+          
           await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile'), profileData);
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', cleanUser), { uid, ...profileData });
         } else {
+          // Registro regular: Se va a la base de datos de aprobación
           await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'waitlist'), {
-            instagram: cleanUser, email: email, timestamp: new Date().toISOString()
+            instagram: cleanUser,
+            email: email,
+            status: 'pending_approval',
+            timestamp: new Date().toISOString()
           });
-          setMsg('🎉 ¡Estás en la lista VIP! Si eres de los primeros 100, recibirás tu código de 1 MES GRATIS por correo.');
+          setMsg('🎉 ¡Solicitud recibida! Estamos validando tu perfil. Te notificaremos por correo cuando tus 3 MESES GRATIS estén listos para usarse.');
           setEmail(''); setIgUser(''); setInviteCode('');
         }
       }
@@ -213,23 +216,25 @@ function LandingPage() {
              <span className="font-black text-2xl lg:text-3xl tracking-widest uppercase">TopCodes</span>
           </div>
           <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-6 lg:mb-8">
-            La élite no paga <br/><span className="text-[#d1ff64]">comisiones.</span>
+            Monetiza como <br/><span className="text-[#d1ff64]">la élite.</span>
           </h1>
+          
           <p className="text-slate-400 text-lg lg:text-xl max-w-lg leading-relaxed mb-6">
-            Nosotros te cobramos <strong className="text-white">$59 MXN al mes. Punto.</strong>
+            Linktree te cobra el 12% por vender. TopCodes es tu nueva infraestructura. Únete hoy y obtén <strong className="text-white">3 Meses Gratis de acceso Elite</strong>. Después, mantén la versión gratuita o elige planes desde $29 MXN al mes.
           </p>
+
           <ul className="space-y-4 text-base font-bold text-slate-300">
             <li className="flex items-start gap-3">
               <CheckCircle size={20} className="text-[#d1ff64] mt-1 shrink-0"/> 
-              <div>Tus Stories mueren en 24h, TopCodes los extiende a 28 días.</div>
+              <div>Tus Stories mueren en 24h, TopCodes las extiende a 28 días.</div>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle size={20} className="text-[#d1ff64] mt-1 shrink-0"/> 
-              <div>0% comisiones. Tú te quedas con todo lo que vendas.</div>
+              <div>Analítica Avanzada: Proyecta tus comisiones y negocia mejor.</div>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle size={20} className="text-[#d1ff64] mt-1 shrink-0"/> 
-              <div>Tu propio dominio premium topcodes.lat/tu-usuario.</div>
+              <div>Planes justos: Desde $0 hasta $99 MXN con 0% de comisión nuestra.</div>
             </li>
           </ul>
         </div>
@@ -242,52 +247,71 @@ function LandingPage() {
               Ingresar
             </button>
             <button onClick={() => setIsLogin(false)} className={`pb-4 font-black uppercase tracking-widest text-xs ${!isLogin ? 'border-b-4 border-[#d1ff64] text-black' : 'text-slate-300'}`}>
-              Acceso VIP
+              Crear mi Spot
             </button>
           </div>
           
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold mb-6 flex items-start gap-2">
-              <AlertCircle size={16}/> {error}
+              <AlertCircle size={16} className="shrink-0 mt-0.5"/> <p>{error}</p>
             </div>
           )}
           
           {msg && (
             <div className="bg-green-50 text-green-600 p-4 rounded-xl text-xs font-bold mb-6 flex items-center gap-2">
-              <CheckCircle size={14}/> {msg}
+              <CheckCircle size={14}/> <p>{msg}</p>
             </div>
           )}
           
           <form onSubmit={handleAuth} className="space-y-4">
             {isLogin ? (
               <>
-                <input type="email" placeholder="Correo" required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none" value={email} onChange={e=>setEmail(e.target.value)}/>
-                <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none" value={password} onChange={e=>setPassword(e.target.value)}/>
-                <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest">
+                <input type="email" placeholder="Correo" required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={email} onChange={e=>setEmail(e.target.value)}/>
+                <input type="password" placeholder="Contraseña" required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={password} onChange={e=>setPassword(e.target.value)}/>
+                <button type="submit" className="w-full bg-black text-[#d1ff64] py-5 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] transition-transform shadow-xl mt-4">
                   Acceder al Spot
                 </button>
+                <div className="mt-8 text-center">
+                  <button onClick={handleResetPassword} type="button" className="text-[10px] font-black uppercase text-slate-400 hover:text-black tracking-widest transition-colors outline-none">
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
               </>
             ) : (
-              <div className="space-y-4">
-                <div className="bg-slate-900 p-5 rounded-2xl mb-6 relative overflow-hidden text-white">
-                   <p className="text-[10px] text-[#d1ff64] font-black uppercase mb-1">Beta Abierta 100</p>
-                   <p className="text-xs font-bold">Primer mes gratis + 15 días extra por feedback.</p>
-                </div>
-                <input type="text" placeholder="Instagram (@...)" required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
-                <input type="email" placeholder="Correo" required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none" value={email} onChange={e=>setEmail(e.target.value)}/>
-                <input type="text" placeholder="Código de Invitación" className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold uppercase outline-none" value={inviteCode} onChange={e=>setInviteCode(e.target.value)}/>
+              <div className="space-y-4 animate-in fade-in">
                 
-                {isUnlocked && (
-                  <div className="pt-4 border-t border-slate-100 space-y-4">
-                    <select required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none" value={category} onChange={e=>setCategory(e.target.value)}>
-                      <option value="">Nicho</option>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <input type="password" placeholder="Crea tu contraseña" required className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-bold outline-none" value={password} onChange={e=>setPassword(e.target.value)}/>
+                <div className="bg-slate-900 p-5 rounded-2xl mb-6 border border-slate-800 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-2 opacity-10"><Zap size={60}/></div>
+                   <p className="text-[10px] text-[#d1ff64] font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Clock size={12}/> Prueba Elite: 3 Meses Gratis</p>
+                   <p className="text-xs text-slate-300 font-bold leading-relaxed">Únete hoy y obtén acceso total a nuestras analíticas. Por control de calidad, <strong className="text-white">revisamos y aprobamos cada perfil manualmente.</strong> Al finalizar tu prueba, puedes mantener la versión gratuita o elegir un plan Pro.</p>
+                </div>
+                
+                <input type="text" placeholder="Usuario de Instagram (@...)" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={igUser} onChange={e=>setIgUser(e.target.value)}/>
+                <input type="email" placeholder="Tu mejor correo electrónico" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#d1ff64]" value={email} onChange={e=>setEmail(e.target.value)}/>
+                
+                {isUnlockedFounders && (
+                  <div className="space-y-4 pt-4 border-t border-slate-100 animate-in slide-in-from-top-4">
+                    <p className="text-[10px] font-black text-green-500 uppercase tracking-widest text-center flex items-center justify-center gap-1">
+                      <Lock size={12} className="opacity-50"/> 
+                      Bypass Code Activado (Aprobación Instantánea)
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <select required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={category} onChange={e=>setCategory(e.target.value)}>
+                        <option value="">Nicho</option>
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <input type="text" placeholder="Ciudades" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={cities} onChange={e=>setCities(e.target.value)}/>
+                    </div>
+                    <input type="password" placeholder="Crea tu contraseña" required className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold outline-none focus:ring-2 focus:ring-black" value={password} onChange={e=>setPassword(e.target.value)}/>
                   </div>
                 )}
-                <button type="submit" className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest ${isUnlocked ? 'bg-[#d1ff64] text-black' : 'bg-black text-white'}`}>
-                  {isUnlocked ? 'Crear Spot' : 'Unirme a la lista'}
+
+                <div className="pt-2">
+                  <input type="password" placeholder="¿Tienes código de Bypass? (Opcional)" className="w-full bg-transparent border-b border-slate-200 p-2 text-xs font-bold outline-none focus:border-black uppercase transition-colors" value={inviteCode} onChange={e=>setInviteCode(e.target.value)}/>
+                </div>
+
+                <button type="submit" className="w-full bg-black text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] transition-transform shadow-xl mt-4">
+                  {isUnlockedFounders ? 'Crear mi Spot Ahora' : 'Solicitar mis 3 Meses Gratis'}
                 </button>
               </div>
             )}
@@ -341,7 +365,7 @@ function DashboardLayout({ user }) {
           <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18}/>} label="Perfil" />
         </nav>
         <div className="p-6 border-t border-slate-100 space-y-2">
-          <a href={mailtoLink} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-black rounded-2xl text-xs font-black uppercase transition-all">
+          <a href={mailtoLink} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-black hover:bg-slate-100 rounded-2xl text-xs font-black uppercase transition-all">
             <Mail size={16} /> Soporte
           </a>
           <button onClick={() => signOut(auth)} className="w-full flex items-center justify-center gap-2 px-5 py-4 bg-slate-50 text-slate-500 hover:text-red-500 rounded-2xl text-xs font-black uppercase transition-all">
@@ -419,7 +443,6 @@ function DemoDashboardLayout() {
                 <RouterLink to="/" className="bg-black text-[#d1ff64] px-3 py-1.5 rounded-lg text-[10px] uppercase font-black hover:scale-105 transition-transform">Crear mi cuenta</RouterLink>
             </div>
         </div>
-
         <div className="lg:hidden bg-white p-4 flex justify-between items-center border-b border-slate-200 shadow-sm z-20">
           <div className="flex items-center gap-2">
             <BrandLogo size={24} className="text-black fill-[#d1ff64]" />
@@ -974,11 +997,9 @@ function PublicSpot() {
   if (!publicProfile) return <LoadingScreen />;
 
   const heroDeal = promotions.find(p => p.isHero && p.type !== 'link');
-  // 🟢 FIX: En lugar de ocultar todos los "isHero", solo ocultamos el que ya se mostró gigante (heroDeal.id), forzando a que los demás sí aparezcan.
-  const regularDeals = promotions.filter(p => p.type !== 'link' && p.id !== heroDeal?.id && (p.brandName || '').toLowerCase().includes(searchTerm.toLowerCase()));
+  const regularDeals = promotions.filter(p => !p.isHero && p.type !== 'link' && p.id !== heroDeal?.id && (p.brandName || '').toLowerCase().includes(searchTerm.toLowerCase()));
   const standardLinks = promotions.filter(p => p.type === 'link' && (p.brandName || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
-  // 🟢 Helper seguro en línea para el dominio custom
   const customDomain = publicProfile?.customUrl ? (function(){
     try { return new URL(publicProfile.customUrl).hostname; } 
     catch(e){ return publicProfile.customUrl.replace(/^https?:\/\//, '').split('/')[0]; }
